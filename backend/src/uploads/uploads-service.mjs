@@ -1,6 +1,11 @@
 import crypto from "node:crypto";
 import path from "node:path";
 import { ApiError } from "../../../scripts/error-response.mjs";
+import {
+  createObjectStorageClient,
+  readObjectStorageConfig,
+  withStoragePrefix,
+} from "../storage/object-storage-client.mjs";
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -43,59 +48,30 @@ export function createUploadsService({ storage, keyFactory = createImageObjectKe
 export function createS3ImageStorage({
   env = process.env,
   s3Client,
+  S3Client,
   PutObjectCommand,
-  now = () => new Date(),
+  GetObjectCommand,
+  getSignedUrl,
 } = {}) {
-  const config = readObjectStorageConfig(env);
-
-  async function getClientParts() {
-    if (s3Client && PutObjectCommand) {
-      return { client: s3Client, PutObjectCommand };
-    }
-
-    const aws = await import("@aws-sdk/client-s3");
-    return {
-      client:
-        s3Client ??
-        new aws.S3Client({
-          endpoint: config.endpoint,
-          region: config.region,
-          forcePathStyle: true,
-          credentials: {
-            accessKeyId: config.accessKeyId,
-            secretAccessKey: config.secretAccessKey,
-          },
-          requestChecksumCalculation: "WHEN_REQUIRED",
-        }),
-      PutObjectCommand: PutObjectCommand ?? aws.PutObjectCommand,
-    };
-  }
+  const objectStorage = createObjectStorageClient({
+    env,
+    s3Client,
+    S3Client,
+    PutObjectCommand,
+    GetObjectCommand,
+    getSignedUrl,
+  });
 
   return {
     async putImage({ key, body, contentType, contentLength }) {
-      if (!Buffer.isBuffer(body)) {
+      if (!Buffer.isBuffer(body) && !(body instanceof Uint8Array)) {
         throw new ApiError(400, "VALIDATION_ERROR", "Image body must be buffered before upload");
       }
       if (!Number.isInteger(contentLength) || contentLength !== body.byteLength) {
         throw new ApiError(400, "VALIDATION_ERROR", "Image ContentLength must match the buffered body length");
       }
 
-      const objectKey = withStoragePrefix(config.prefix, key);
-      const { client, PutObjectCommand: Command } = await getClientParts();
-      await client.send(
-        new Command({
-          Bucket: config.bucket,
-          Key: objectKey,
-          Body: body,
-          ContentType: contentType,
-          ContentLength: contentLength,
-        }),
-      );
-
-      return {
-        key: objectKey,
-        url: buildObjectUrl(config, objectKey, now()),
-      };
+      return objectStorage.putObject({ key, body, contentType, contentLength });
     },
   };
 }
@@ -132,42 +108,7 @@ export async function normalizeImageInput(input = {}) {
   };
 }
 
-export function readObjectStorageConfig(env) {
-  return {
-    endpoint: requireEnvUrl(env, "OBJECT_STORAGE_ENDPOINT"),
-    region: requireEnv(env, "OBJECT_STORAGE_REGION"),
-    bucket: requireEnv(env, "OBJECT_STORAGE_BUCKET"),
-    accessKeyId: requireEnv(env, "OBJECT_STORAGE_ACCESS_KEY_ID"),
-    secretAccessKey: requireEnv(env, "OBJECT_STORAGE_SECRET_ACCESS_KEY"),
-    prefix: normalizeStoragePrefix(requireEnv(env, "OBJECT_STORAGE_PREFIX")),
-    publicBaseUrl: optionalEnvUrl(env, "OBJECT_STORAGE_PUBLIC_BASE_URL"),
-  };
-}
-
-export function withStoragePrefix(prefix, key) {
-  const normalizedPrefix = normalizeStoragePrefix(prefix);
-  const normalizedKey = String(key ?? "").replace(/^\/+/, "");
-  if (!normalizedKey || normalizedKey.includes("..")) {
-    throw new ApiError(400, "VALIDATION_ERROR", "Invalid object key");
-  }
-  return `${normalizedPrefix}/${normalizedKey}`;
-}
-
-function buildObjectUrl(config, objectKey, _now) {
-  if (config.publicBaseUrl) {
-    return `${config.publicBaseUrl.replace(/\/+$/, "")}/${encodeObjectKey(objectKey)}`;
-  }
-
-  const endpoint = config.endpoint.replace(/\/+$/, "");
-  return `${endpoint}/${encodeURIComponent(config.bucket)}/${encodeObjectKey(objectKey)}`;
-}
-
-function encodeObjectKey(key) {
-  return key
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-}
+export { readObjectStorageConfig, withStoragePrefix };
 
 function extensionFor(contentType, originalName) {
   const mapped = EXTENSIONS_BY_TYPE.get(contentType);
@@ -200,48 +141,4 @@ async function toBuffer(value) {
 
 function normalizeContentType(value) {
   return String(value ?? "").split(";")[0].trim().toLowerCase();
-}
-
-function requireEnv(env, name) {
-  const value = env[name];
-  if (!value || !String(value).trim()) {
-    throw new ApiError(500, "CONFIGURATION_ERROR", `${name} is required`);
-  }
-  return String(value).trim();
-}
-
-function requireEnvUrl(env, name) {
-  const value = requireEnv(env, name);
-  validateUrl(value, name);
-  return value;
-}
-
-function optionalEnvUrl(env, name) {
-  const value = env[name];
-  if (!value || !String(value).trim()) {
-    return "";
-  }
-  const normalized = String(value).trim();
-  validateUrl(normalized, name);
-  return normalized;
-}
-
-function validateUrl(value, name) {
-  let url;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new ApiError(500, "CONFIGURATION_ERROR", `${name} must be an absolute URL`);
-  }
-  if (!["http:", "https:"].includes(url.protocol)) {
-    throw new ApiError(500, "CONFIGURATION_ERROR", `${name} must use http or https`);
-  }
-}
-
-function normalizeStoragePrefix(value) {
-  const prefix = String(value ?? "").trim().replace(/^\/+|\/+$/g, "");
-  if (!prefix || prefix.includes("..")) {
-    throw new ApiError(500, "CONFIGURATION_ERROR", "OBJECT_STORAGE_PREFIX is invalid");
-  }
-  return prefix;
 }
