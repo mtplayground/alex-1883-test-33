@@ -49,6 +49,7 @@ export function App() {
             path: "/post/:id",
             element: React.createElement(ProtectedRoute, null, React.createElement(PostDetailRoute)),
           }),
+          React.createElement(Route, { path: "/auth/google", element: React.createElement(AuthStartRoute) }),
           React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
           React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
         ),
@@ -238,6 +239,31 @@ function PostDetailRoute() {
           React.createElement("h2", null, "Selected post"),
           React.createElement("p", null, "No post id was provided."),
         ),
+  );
+}
+
+function AuthStartRoute() {
+  const location = useLocation();
+  const next = new URLSearchParams(location.search).get("next") || "/";
+
+  return React.createElement(
+    RouteShell,
+    {
+      eyebrow: "Sign in",
+      title: "Sign in with Google",
+      description: "Start authentication before opening protected feed, profile, and post routes.",
+    },
+    React.createElement(
+      "section",
+      { className: "route-panel", "aria-label": "Google sign in" },
+      React.createElement("h2", null, "Google sign in"),
+      React.createElement(
+        "p",
+        null,
+        "The authentication handoff is ready. Continue when Google OAuth credentials are configured for this environment.",
+      ),
+      React.createElement(Link, { className: "route-action", to: next }, "Return to requested route"),
+    ),
   );
 }
 
