@@ -1,0 +1,57 @@
+.post-card {
+  display: grid;
+  gap: 10px;
+}
+
+.post-card__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.post-card__body {
+  display: grid;
+  gap: 8px;
+}
+
+.post-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.post-card__author {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.post-card__avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.post-card__author-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-card__time {
+  flex: 0 0 auto;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.post-card__caption {
+  margin: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
