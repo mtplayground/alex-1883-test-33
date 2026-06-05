@@ -1,0 +1,100 @@
+.comment-thread {
+  display: grid;
+  gap: 12px;
+}
+
+.comment-thread__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment-thread__item {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+}
+
+.comment-thread__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.comment-thread__body {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.comment-thread__header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.comment-thread__author {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.comment-thread__time {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.comment-thread__content {
+  margin: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.comment-thread__empty,
+.comment-thread__error {
+  margin: 0;
+}
+
+.comment-thread__error {
+  color: #b91c1c;
+}
+
+.comment-thread__form {
+  display: grid;
+  gap: 8px;
+}
+
+.comment-thread__label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.comment-thread__input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 76px;
+}
+
+.comment-thread__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-thread__count {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.comment-thread__submit,
+.comment-thread__delete {
+  min-height: 36px;
+  padding: 0 12px;
+}
