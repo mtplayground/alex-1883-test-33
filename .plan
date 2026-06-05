@@ -1,36 +1,34 @@
-Architecture plan for issues #63-#67
+Architecture plan for issues #73-#76
 
 Project baseline
 - Product name is alex-1883-test-33.
 - Monorepo uses Node ESM workspaces: frontend/ is React + Vite, backend/ is Express.
-- Backend serves frontend/dist at / in production and keeps /api/* available for JSON APIs.
-- Existing frontend modules already include auth context/client, sign-in flow, profile page, feed page, post card, image composer, follow toggle, like toggle, and comment thread.
+- Backend serves frontend/dist for the SPA and should expose production APIs under /api/*.
+- Existing backend modules cover Google OAuth, JWT auth, users/profile data, image uploads, posts, feed, follows, likes, and comments, but the main Express app currently mounts only health/static handling.
+- Existing frontend modules cover auth context/client, sign-in flow, profile page, feed page, post card, image composer, follow toggle, like toggle, and comment thread.
 
 Issue order and dependencies
-1. #63 replaces the scaffold App with a real React Router app and route table.
-2. #64 adds the shared Layout/top bar on top of the router from #63.
-3. #65 wraps protected routes using the existing Auth Context and controls unauthenticated redirects.
-4. #66 composes the post detail route from existing post, like, comment, and follow modules.
-5. #67 performs end-to-end smoke wiring across login, top bar state, posting, feed, likes, and comments.
+1. #73 mounts all existing backend feature routers into backend/src/app.mjs under a unified /api prefix and wires JWT authentication middleware where routes require a user.
+2. #74 uses the backend auth entry points from #73 to complete the top-right Sign in / signed-in user menu behavior.
+3. #75 replaces route-directory/placeholder views with real Feed, Profile, and Post detail pages that call the mounted backend APIs.
+4. #76 runs the deployed end-to-end path: login -> image post -> feed -> like/comment/follow, fixing any integration gaps left by #73-#75.
 
-Frontend module structure
-- Keep application routing in frontend/src/App.mjs.
-- Add route/page files only when an existing module is not enough; prefer reusing:
-  - frontend/src/feed/feed-page.mjs for /feed
-  - frontend/src/auth/profile-page.mjs for /profile
-  - frontend/src/auth/sign-in-flow.mjs for /auth/callback
-  - frontend/src/posts/post-card.mjs plus likes/comments/follows modules for /post/:id
-- Add a layout module under frontend/src/layout/ for global navigation shared by all routes.
-- Keep CSS alongside each component and import it from the component/module that owns the styles.
+Backend structure
+- Keep backend/src/app.mjs as the production Express composition root.
+- Mount feature route handlers under /api using thin adapters rather than duplicating service logic.
+- Preserve /healthz and /api/healthz.
+- Use existing ApiError/toErrorResponse contracts and log unexpected 500s before responding.
+- Keep PostgreSQL as the only persistent store through Prisma and DATABASE_URL.
+- Keep S3-compatible Object Storage as the only binary image storage path through the existing storage client.
 
-Backend/API assumptions
-- Do not invent alternate product names or placeholder auth/storage/database behavior.
-- PostgreSQL remains the only persistent database; Object Storage remains the only binary storage path.
-- Route implementation work should mount existing backend routers into backend/src/app.mjs only when the issue scope calls for it.
-- Preserve existing error-envelope behavior and health routes.
+Frontend structure
+- Keep React route ownership in frontend/src/App.mjs and shared navigation in frontend/src/layout/.
+- Centralize API URL changes in frontend/src/auth/api-client.mjs so pages do not hardcode divergent paths.
+- Reuse existing feature components for Feed, Profile, Post detail, upload composer, likes, comments, and follows.
+- The topbar should use Auth Context state; unauthenticated users see Sign in, authenticated users see their account menu.
 
 Key design decisions
-- Use react-router for route ownership and navigation; avoid ad hoc hash routing.
-- Protected-route behavior should be declarative and built on the existing AuthProvider state.
-- Keep the deployed backend as the single public service: API routes under /api/*, frontend static shell for non-API routes.
-- Prefer small composition work over rewrites; most feature pieces already exist and need routing/layout/data wiring.
+- API paths should be unambiguous /api/* routes so SPA fallback never intercepts JSON endpoints.
+- Protected frontend routes should fail into a coherent sign-in flow instead of a not-found page.
+- Do not fabricate external OAuth or Object Storage credentials; unavailable external integrations should surface clearly.
+- Favor narrow adapters and composition over rewrites because the feature modules already exist.
