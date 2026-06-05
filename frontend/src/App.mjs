@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { BrowserRouter, Link, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 
-import { createApiClient, createLocalStorageTokenStore } from "./auth/api-client.mjs";
 import { createAuthCallbackPage, parseAuthCallbackUrl } from "./auth/sign-in-flow.mjs";
 import { createProfilePage } from "./auth/profile-page.mjs";
+import { AuthProvider, useAuthSession } from "./auth/react-auth-provider.mjs";
+import { getHomeRouteDecision, getProtectedRouteDecision } from "./auth/route-guards.mjs";
 import { APP_ROUTES } from "./app-routes.mjs";
 import { createFeedPage } from "./feed/feed-page.mjs";
 import { AppLayout } from "./layout/app-layout.mjs";
@@ -17,26 +18,50 @@ export { APP_ROUTES };
 
 export function App() {
   return React.createElement(
-    BrowserRouter,
+    AuthProvider,
     null,
     React.createElement(
-      Routes,
+      BrowserRouter,
       null,
       React.createElement(
-        Route,
-        { element: React.createElement(AppLayout) },
-        React.createElement(Route, { path: "/", element: React.createElement(HomeRoute) }),
-        React.createElement(Route, { path: "/feed", element: React.createElement(FeedRoute) }),
-        React.createElement(Route, { path: "/profile", element: React.createElement(ProfileRoute) }),
-        React.createElement(Route, { path: "/post/:id", element: React.createElement(PostDetailRoute) }),
-        React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
-        React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
+        Routes,
+        null,
+        React.createElement(
+          Route,
+          { element: React.createElement(AppLayout) },
+          React.createElement(Route, { path: "/", element: React.createElement(HomeRoute) }),
+          React.createElement(Route, { path: "/feed", element: React.createElement(ProtectedRoute, null, React.createElement(FeedRoute)) }),
+          React.createElement(
+            Route,
+            { path: "/profile", element: React.createElement(ProtectedRoute, null, React.createElement(ProfileRoute)) },
+          ),
+          React.createElement(
+            Route,
+            { path: "/post/:id", element: React.createElement(ProtectedRoute, null, React.createElement(PostDetailRoute)) },
+          ),
+          React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
+          React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
+        ),
       ),
     ),
   );
 }
 
 function HomeRoute() {
+  const { authView } = useAuthSession();
+  const decision = getHomeRouteDecision(authView);
+
+  if (decision.action === "loading") {
+    return React.createElement(RouteStatus, {
+      title: "Loading session",
+      message: "Checking whether to open the feed or the public route overview.",
+    });
+  }
+
+  if (decision.action === "redirect") {
+    return React.createElement(Navigate, { replace: true, to: decision.target });
+  }
+
   return React.createElement(
     "main",
     { className: "app-shell", "aria-labelledby": "home-title" },
@@ -70,6 +95,38 @@ function HomeRoute() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  const location = useLocation();
+  const { authContext, authView } = useAuthSession();
+  const signInUrl = authContext.getSignInUrl(`${location.pathname}${location.search}${location.hash}`);
+  const decision = getProtectedRouteDecision(authView, { signInUrl });
+
+  if (decision.action === "loading") {
+    return React.createElement(RouteStatus, {
+      title: "Loading session",
+      message: "Checking whether this route is available for your account.",
+    });
+  }
+
+  if (decision.action === "redirect") {
+    return React.createElement(SignInRedirect, { signInUrl: decision.signInUrl });
+  }
+
+  return children;
+}
+
+function SignInRedirect({ signInUrl }) {
+  useEffect(() => {
+    globalThis.location?.assign?.(signInUrl);
+  }, [signInUrl]);
+
+  return React.createElement(RouteStatus, {
+    action: React.createElement("a", { className: "route-action", href: signInUrl }, "Continue to Sign in"),
+    title: "Sign in required",
+    message: "Redirecting to Google sign in.",
+  });
+}
+
 function FeedRoute() {
   const apiClient = useAppApiClient();
   const mountFeedPage = useMemo(
@@ -93,13 +150,18 @@ function FeedRoute() {
 }
 
 function ProfileRoute() {
+  const { authView } = useAuthSession();
   const mountProfilePage = useMemo(
     () => () => {
-      const page = createProfilePage();
-      page.setState({ status: "signed-out" });
+      const page = createProfilePage({ currentUser: authView.currentUser });
+      if (authView.currentUser) {
+        page.setState({ currentUser: authView.currentUser });
+      } else {
+        page.setState({ status: "signed-out" });
+      }
       return page;
     },
-    [],
+    [authView.currentUser],
   );
 
   return React.createElement(
@@ -183,6 +245,20 @@ function NotFoundRoute() {
   );
 }
 
+function RouteStatus({ title, message, action = null }) {
+  return React.createElement(
+    "main",
+    { className: "app-shell route-shell", "aria-labelledby": "route-status-title" },
+    React.createElement(
+      "section",
+      { className: "route-panel", role: "status" },
+      React.createElement("h1", { id: "route-status-title" }, title),
+      React.createElement("p", null, message),
+      action,
+    ),
+  );
+}
+
 function RouteShell({ eyebrow, title, description, children }) {
   return React.createElement(
     "main",
@@ -221,11 +297,6 @@ function DomPageMount({ factory }) {
 }
 
 function useAppApiClient() {
-  return useMemo(
-    () =>
-      createApiClient({
-        tokenStore: createLocalStorageTokenStore(),
-      }),
-    [],
-  );
+  const { authContext } = useAuthSession();
+  return authContext.getApiClient();
 }

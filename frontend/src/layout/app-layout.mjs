@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { createAuthContext, getAuthView } from "../auth/auth-context.mjs";
+import { useAuthSession } from "../auth/react-auth-provider.mjs";
 
 const PRIMARY_NAV_ITEMS = [
   { to: "/", label: "Home", end: true },
@@ -9,22 +9,14 @@ const PRIMARY_NAV_ITEMS = [
   { to: "/profile", label: "Profile" },
 ];
 
-export function AppLayout({ authContext } = {}) {
+export function AppLayout() {
   const location = useLocation();
-  const resolvedAuthContext = useMemo(() => authContext ?? createAuthContext(), [authContext]);
-  const [authState, setAuthState] = useState(() => resolvedAuthContext.getState());
-  const authView = getAuthView(authState);
-  const signInUrl = resolvedAuthContext.getSignInUrl(`${location.pathname}${location.search}${location.hash}`);
+  const { authContext, authView } = useAuthSession();
+  const signInUrl = authContext.getSignInUrl(`${location.pathname}${location.search}${location.hash}`);
   const topBarModel = getTopBarModel(authView, { signInUrl });
 
-  useEffect(() => resolvedAuthContext.subscribe(setAuthState), [resolvedAuthContext]);
-
-  useEffect(() => {
-    void resolvedAuthContext.loadSession();
-  }, [resolvedAuthContext]);
-
   function handleSignOut() {
-    resolvedAuthContext.signOut();
+    authContext.signOut();
   }
 
   return React.createElement(
