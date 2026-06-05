@@ -17,13 +17,13 @@ const currentUser = {
 };
 
 test("top bar auth shows a right-side Sign in link to the Google start route when signed out", () => {
-  const state = createTopBarAuthState({ signInUrl: "/auth/google?next=%2Ffeed" });
+  const state = createTopBarAuthState({ signInUrl: "/api/auth/google?next=%2Ffeed" });
   const view = getTopBarAuthView(state);
 
   assert.equal(view.status, "signed-out");
   assert.equal(view.isSignedOut, true);
   assert.equal(view.buttonLabel, "Sign in");
-  assert.equal(view.signInUrl, "/auth/google?next=%2Ffeed");
+  assert.equal(view.signInUrl, "/api/auth/google?next=%2Ffeed");
   assert.equal(view.displayName, "");
 });
 

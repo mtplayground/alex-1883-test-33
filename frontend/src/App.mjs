@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { createAuthCallbackPage, parseAuthCallbackUrl } from "./auth/sign-in-flow.mjs";
+import { parseAuthCallbackUrl } from "./auth/sign-in-flow.mjs";
 import { createProfilePage } from "./auth/profile-page.mjs";
 import { AuthProvider, useAuthSession } from "./auth/react-auth-provider.mjs";
 import { getHomeRouteDecision, getProtectedRouteDecision } from "./auth/route-guards.mjs";
@@ -59,8 +59,9 @@ export function App() {
 }
 
 function HomeRoute() {
-  const { authView } = useAuthSession();
+  const { authContext, authView } = useAuthSession();
   const decision = getHomeRouteDecision(authView);
+  const signInUrl = authContext.getSignInUrl("/feed");
 
   if (decision.action === "loading") {
     return React.createElement(RouteStatus, {
@@ -90,7 +91,7 @@ function HomeRoute() {
         "div",
         { className: "app-hero__actions" },
         React.createElement(Link, { className: "route-action route-action--primary", to: "/feed" }, "Open feed"),
-        React.createElement("a", { className: "route-action", href: "/auth/google?next=%2Ffeed" }, "Sign in"),
+        React.createElement("a", { className: "route-action", href: signInUrl }, "Sign in"),
       ),
     ),
     React.createElement(
@@ -256,7 +257,13 @@ function PostDetailRoute() {
 
 function AuthStartRoute() {
   const location = useLocation();
+  const { authContext } = useAuthSession();
   const next = new URLSearchParams(location.search).get("next") || "/";
+  const signInUrl = authContext.getSignInUrl(next);
+
+  useEffect(() => {
+    globalThis.location?.assign?.(signInUrl);
+  }, [signInUrl]);
 
   return React.createElement(
     RouteShell,
@@ -269,51 +276,104 @@ function AuthStartRoute() {
       "section",
       { className: "route-panel", "aria-label": "Google sign in" },
       React.createElement("h2", null, "Google sign in"),
-      React.createElement(
-        "p",
-        null,
-        "Google OAuth credentials are not configured for this deployment, so sign in is unavailable until those external credentials are provided.",
-      ),
-      React.createElement(Link, { className: "route-action", to: next }, "Return to requested route"),
+      React.createElement("p", null, "Opening the Google sign in flow."),
+      React.createElement("a", { className: "route-action", href: signInUrl }, "Continue to Google"),
     ),
   );
 }
 
 function AuthCallbackRoute() {
-  const mountCallbackPage = useMemo(
-    () => () => {
-      const page = createAuthCallbackPage();
-      const parsed = parseAuthCallbackUrl(globalThis.location?.href ?? "/auth/callback");
-      if (parsed.hasOAuthError) {
-        page.setState({
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { authContext } = useAuthSession();
+  const [callbackState, setCallbackState] = useState({
+    status: "loading",
+    errorMessage: "",
+  });
+
+  useEffect(() => {
+    let isActive = true;
+    const parsed = parseAuthCallbackUrl(`${location.pathname}${location.search}${location.hash}`);
+
+    if (parsed.hasOAuthError) {
+      setCallbackState({
+        status: "error",
+        errorMessage: parsed.errorDescription || parsed.error,
+      });
+      return () => {
+        isActive = false;
+      };
+    }
+
+    if (!parsed.hasCode) {
+      setCallbackState({
+        status: "error",
+        errorMessage: "Missing Google authorization code.",
+      });
+      return () => {
+        isActive = false;
+      };
+    }
+
+    setCallbackState({ status: "loading", errorMessage: "" });
+    authContext
+      .completeGoogleCallback({ code: parsed.code, state: parsed.state })
+      .then((nextState) => {
+        if (!isActive) {
+          return;
+        }
+        if (nextState.status === "signed-in") {
+          setCallbackState({ status: "success", errorMessage: "" });
+          navigate(nextState.redirectTo || "/feed", { replace: true });
+          return;
+        }
+        setCallbackState({
           status: "error",
-          errorMessage: parsed.errorDescription || parsed.error,
+          errorMessage: nextState.errorMessage || "Unable to complete sign in.",
         });
-      } else if (parsed.hasCode) {
-        page.setState({
-          status: "success",
-          code: parsed.code,
-          state: parsed.state,
-        });
-      } else {
-        page.setState({
+      })
+      .catch((error) => {
+        if (!isActive) {
+          return;
+        }
+        setCallbackState({
           status: "error",
-          errorMessage: "Missing Google authorization code.",
+          errorMessage: error?.message || "Unable to complete sign in.",
         });
-      }
-      return page;
-    },
-    [],
-  );
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [authContext, location.hash, location.pathname, location.search, navigate]);
+
+  const isLoading = callbackState.status === "loading";
+  const hasError = callbackState.status === "error";
 
   return React.createElement(
     RouteShell,
     {
       eyebrow: "Auth callback",
       title: "Sign in callback",
-      description: "Handles the Google OAuth callback route after the provider redirects back.",
+      description: "Completes the Google OAuth callback route after the provider redirects back.",
     },
-    React.createElement(DomPageMount, { factory: mountCallbackPage }),
+    React.createElement(
+      "section",
+      { className: "route-panel", "aria-label": "Sign in callback", role: isLoading ? "status" : undefined },
+      React.createElement("h2", null, isLoading ? "Completing sign in" : hasError ? "Sign in failed" : "Signed in"),
+      React.createElement(
+        "p",
+        { role: hasError ? "alert" : undefined },
+        hasError
+          ? callbackState.errorMessage
+          : isLoading
+            ? "Exchanging the Google authorization code."
+            : "Redirecting.",
+      ),
+      hasError
+        ? React.createElement("a", { className: "route-action", href: authContext.getSignInUrl("/feed") }, "Try again")
+        : null,
+    ),
   );
 }
 

@@ -21,7 +21,7 @@ export function getHomeRouteDecision(authView) {
   };
 }
 
-export function getProtectedRouteDecision(authView, { signInUrl = "/auth/google" } = {}) {
+export function getProtectedRouteDecision(authView, { signInUrl = "/api/auth/google" } = {}) {
   if (authView.isLoading) {
     return {
       action: "loading",

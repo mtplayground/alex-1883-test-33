@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMemoryTokenStore } from "../../frontend/src/auth/api-client.mjs";
-import {
-  createAuthContext,
-  createAuthState,
-  getAuthView,
-} from "../../frontend/src/auth/auth-context.mjs";
+import { createAuthContext, createAuthState, getAuthView } from "../../frontend/src/auth/auth-context.mjs";
 
 const currentUser = {
   id: "user_1",
@@ -70,6 +66,7 @@ test("auth context completes Google callback and stores returned JWT", async () 
         calls.push(input);
         return {
           token: "jwt-token",
+          redirectTo: "/feed",
           user: currentUser,
         };
       },
@@ -81,6 +78,7 @@ test("auth context completes Google callback and stores returned JWT", async () 
   assert.deepEqual(calls, [{ code: "code_1", state: "nonce" }]);
   assert.equal(tokenStore.getToken(), "jwt-token");
   assert.equal(state.status, "signed-in");
+  assert.equal(state.redirectTo, "/feed");
   assert.equal(state.currentUser.displayName, "Ada Lovelace");
 });
 
@@ -100,7 +98,7 @@ test("auth context signOut clears token and notifies subscribers", () => {
 test("auth context builds and starts sign-in redirects with next path", () => {
   const assigned = [];
   const context = createAuthContext({
-    signInUrl: "/auth/google",
+    signInUrl: "/api/auth/google",
     location: {
       pathname: "/feed",
       assign(value) {
@@ -109,9 +107,9 @@ test("auth context builds and starts sign-in redirects with next path", () => {
     },
   });
 
-  assert.equal(context.getSignInUrl(), "/auth/google?next=%2Ffeed");
-  assert.equal(context.startSignIn("/profile"), "/auth/google?next=%2Fprofile");
-  assert.deepEqual(assigned, ["/auth/google?next=%2Fprofile"]);
+  assert.equal(context.getSignInUrl(), "/api/auth/google?next=%2Ffeed");
+  assert.equal(context.startSignIn("/profile"), "/api/auth/google?next=%2Fprofile");
+  assert.deepEqual(assigned, ["/api/auth/google?next=%2Fprofile"]);
 });
 
 test("auth context reports safe error state when session load fails", async () => {

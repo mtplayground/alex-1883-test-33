@@ -38,22 +38,22 @@ test("home route keeps signed-out users on the public landing route", () => {
 
 test("protected route allows signed-in users", () => {
   const decision = getProtectedRouteDecision(getAuthView(createAuthState({ currentUser })), {
-    signInUrl: "/auth/google?next=%2Fprofile",
+    signInUrl: "/api/auth/google?next=%2Fprofile",
   });
 
   assert.deepEqual(decision, {
     action: "allow",
-    signInUrl: "/auth/google?next=%2Fprofile",
+    signInUrl: "/api/auth/google?next=%2Fprofile",
   });
 });
 
 test("protected route redirects signed-out and error states to sign in", () => {
   const signedOut = getProtectedRouteDecision(getAuthView(createAuthState({ status: "signed-out" })), {
-    signInUrl: "/auth/google?next=%2Ffeed",
+    signInUrl: "/api/auth/google?next=%2Ffeed",
   });
   assert.deepEqual(signedOut, {
     action: "redirect",
-    signInUrl: "/auth/google?next=%2Ffeed",
+    signInUrl: "/api/auth/google?next=%2Ffeed",
   });
 
   const error = getProtectedRouteDecision(
@@ -64,12 +64,12 @@ test("protected route redirects signed-out and error states to sign in", () => {
       }),
     ),
     {
-      signInUrl: "/auth/google?next=%2Ffeed",
+      signInUrl: "/api/auth/google?next=%2Ffeed",
     },
   );
   assert.deepEqual(error, {
     action: "redirect",
-    signInUrl: "/auth/google?next=%2Ffeed",
+    signInUrl: "/api/auth/google?next=%2Ffeed",
   });
 });
 
@@ -78,6 +78,6 @@ test("protected route waits while session state is loading", () => {
 
   assert.deepEqual(decision, {
     action: "loading",
-    signInUrl: "/auth/google",
+    signInUrl: "/api/auth/google",
   });
 });

@@ -9,7 +9,7 @@ export class ApiClientError extends Error {
   }
 }
 
-export function createApiClient({ baseUrl = "/", tokenStore, fetchFn = globalThis.fetch } = {}) {
+export function createApiClient({ baseUrl = "/api/", tokenStore, fetchFn = globalThis.fetch } = {}) {
   if (typeof fetchFn !== "function") {
     throw new Error("fetch is required");
   }
@@ -141,7 +141,7 @@ async function requestJson({
   headers = {},
   expectedStatuses = [200, 201, 204],
 }) {
-  const url = new URL(String(path), normalizeBaseUrl(baseUrl));
+  const url = new URL(toRelativeRequestPath(path), normalizeBaseUrl(baseUrl));
   const requestHeaders = new Headers(headers);
   const token = tokenStore?.getToken?.();
   if (token) {
@@ -170,7 +170,15 @@ async function requestJson({
 }
 
 function normalizeBaseUrl(baseUrl) {
-  return new URL(String(baseUrl || "/"), "http://local");
+  const url = new URL(String(baseUrl || "/api/"), "http://local");
+  if (!url.pathname.endsWith("/")) {
+    url.pathname = `${url.pathname}/`;
+  }
+  return url;
+}
+
+function toRelativeRequestPath(path) {
+  return String(path || "").replace(/^\/+/, "");
 }
 
 function isPlainJsonBody(body) {

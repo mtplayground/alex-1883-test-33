@@ -13,14 +13,14 @@ const currentUser = {
 
 test("top bar model shows Sign in for signed-out visitors", () => {
   const model = getTopBarModel(getAuthView(createAuthState({ status: "signed-out" })), {
-    signInUrl: "/auth/google?next=%2Ffeed",
+    signInUrl: "/api/auth/google?next=%2Ffeed",
   });
 
   assert.equal(model.status, "signed-out");
   assert.equal(model.showSignIn, true);
   assert.equal(model.showUserMenu, false);
   assert.equal(model.label, "Sign in");
-  assert.equal(model.signInUrl, "/auth/google?next=%2Ffeed");
+  assert.equal(model.signInUrl, "/api/auth/google?next=%2Ffeed");
 });
 
 test("top bar model shows loading without exposing signed-in controls", () => {
