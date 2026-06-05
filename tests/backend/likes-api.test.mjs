@@ -82,7 +82,7 @@ test("PostgreSQL likes repository uses parameterized upsert and delete queries",
     ["post_1", "user_1"],
     ["post_1", "user_1"],
   ]);
-  assert.match(queries[0].text, /ON CONFLICT \(post_id, user_id\) DO NOTHING/);
+  assert.match(queries[0].text, /ON CONFLICT \(user_id, post_id\) DO NOTHING/);
   assert.match(queries[1].text, /DELETE FROM likes/);
   assert.match(queries[2].text, /count\(\*\)::int FROM likes/);
 });
