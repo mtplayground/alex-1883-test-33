@@ -119,8 +119,9 @@ function createHandlerRegistry({ env, logger, db, jwtService, storage, fetchFn }
     resolve(method, path) {
       if (matchAuthRoute(method, path)) {
         authHandlers ??= createAuthHandlers({
-          oauthService: createGoogleOAuthService({
-            userRepository: createPostgresGoogleUserRepository(getDb()),
+          oauthService: createConfiguredGoogleOAuthService({
+            env,
+            getDb,
             jwtService: getJwtService(),
             fetchFn,
           }),
@@ -279,4 +280,29 @@ function hasObjectStorageConfig(env) {
     "OBJECT_STORAGE_SECRET_ACCESS_KEY",
     "OBJECT_STORAGE_PREFIX",
   ].every((name) => Boolean(env[name] && String(env[name]).trim()));
+}
+
+function createConfiguredGoogleOAuthService({ env, getDb, jwtService, fetchFn }) {
+  if (!hasGoogleOAuthConfig(env)) {
+    return {
+      getAuthorizationRedirect() {
+        throw new ApiError(503, "FEATURE_UNAVAILABLE", "Google sign in is not configured");
+      },
+      async completeCallback() {
+        throw new ApiError(503, "FEATURE_UNAVAILABLE", "Google sign in is not configured");
+      },
+    };
+  }
+
+  return createGoogleOAuthService({
+    userRepository: createPostgresGoogleUserRepository(getDb()),
+    jwtService,
+    fetchFn,
+  });
+}
+
+function hasGoogleOAuthConfig(env) {
+  return ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI", "PUBLIC_APP_URL"].every((name) =>
+    Boolean(env[name] && String(env[name]).trim()),
+  );
 }

@@ -140,14 +140,20 @@ function ProtectedRoute({ children }) {
 }
 
 function SignInRedirect({ signInUrl }) {
-  useEffect(() => {
-    globalThis.location?.assign?.(signInUrl);
-  }, [signInUrl]);
-
   return React.createElement(RouteStatus, {
-    action: React.createElement("a", { className: "route-action", href: signInUrl }, "Continue to Sign in"),
     title: "Sign in required",
-    message: "Redirecting to Google sign in.",
+    message:
+      "This page is part of the signed-in photo workflow. Use Google sign in when it is configured for this deployment, then return here to create posts, browse the feed, and use likes, comments, and follows.",
+    action: React.createElement(
+      "div",
+      { className: "route-actions" },
+      React.createElement(
+        "a",
+        { className: "route-action route-action--primary", href: signInUrl },
+        "Continue to Sign in",
+      ),
+      React.createElement(Link, { className: "route-action", to: "/" }, "Back home"),
+    ),
   });
 }
 
