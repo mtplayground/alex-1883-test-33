@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../backend/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  googleId  String   @unique(map: "users_google_id_unique") @map("google_id")
+  email     String   @unique(map: "users_email_unique")
+  name      String   @default("")
+  avatarUrl String   @default("") @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  posts             Post[]    @relation("PostAuthor")
+  comments          Comment[] @relation("CommentAuthor")
+  likes             Like[]
+  followingEdges    Follow[]  @relation("Follower")
+  followerEdges     Follow[]  @relation("Followee")
+
+  @@index([email], map: "users_email_idx")
+  @@map("users")
+}
+
+model Post {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  imageUrl  String   @map("image_url")
+  caption   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  author   User      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    Like[]
+
+  @@index([authorId, createdAt(sort: Desc), id(sort: Desc)], map: "posts_author_created_at_id_idx")
+  @@index([createdAt(sort: Desc), id(sort: Desc)], map: "posts_created_at_id_idx")
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt, id], map: "comments_post_created_at_id_idx")
+  @@index([authorId], map: "comments_author_id_idx")
+  @@map("comments")
+}
+
+model Like {
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId], map: "likes_user_post_unique")
+  @@index([postId], map: "likes_post_id_idx")
+  @@index([userId], map: "likes_user_id_idx")
+  @@map("likes")
+}
+
+model Follow {
+  followerId String   @map("follower_id") @db.Uuid
+  followeeId String   @map("followee_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  follower User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee User @relation("Followee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeId], map: "follows_follower_followee_unique")
+  @@index([followeeId], map: "follows_followee_id_idx")
+  @@index([followerId], map: "follows_follower_id_idx")
+  @@map("follows")
+}
