@@ -3,6 +3,11 @@
   gap: 16px;
 }
 
+.feed-workflow {
+  display: grid;
+  gap: 20px;
+}
+
 .feed-page__list {
   display: grid;
   gap: 16px;
@@ -26,6 +31,21 @@
 .feed-page__sentinel {
   width: 100%;
   height: 1px;
+}
+
+.feed-card-link {
+  display: block;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.feed-card-link:focus-visible {
+  outline: 3px solid #94a3b8;
+  outline-offset: 2px;
 }
 
 .feed-card {

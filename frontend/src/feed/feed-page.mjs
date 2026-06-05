@@ -54,6 +54,17 @@ export function appendFeedPage(state, page) {
   };
 }
 
+export function prependFeedPost(state, post) {
+  const normalized = normalizePost(post);
+  const nextPosts = state.posts.filter((item) => String(item.id) !== String(normalized.id));
+
+  return {
+    ...state,
+    posts: [normalized, ...nextPosts],
+    errorMessage: "",
+  };
+}
+
 export function failFeedLoad(state, error) {
   return {
     ...state,
@@ -163,6 +174,10 @@ export function createFeedPage({ apiClient, initialPosts = [], nextCursor = null
       return state;
     },
     loadNextPage,
+    prependPost(post) {
+      state = prependFeedPost(state, post);
+      render();
+    },
     disconnect() {
       if (observer) {
         observer.disconnect();
@@ -172,6 +187,11 @@ export function createFeedPage({ apiClient, initialPosts = [], nextCursor = null
 }
 
 function renderPostCard(post) {
+  const link = document.createElement("a");
+  link.className = "feed-card-link";
+  link.href = `/post/${encodeURIComponent(post.id)}`;
+  link.setAttribute("aria-label", `Open post by ${post.author.name}`);
+
   const article = document.createElement("article");
   article.className = "feed-card";
   article.dataset.postId = String(post.id);
@@ -204,7 +224,8 @@ function renderPostCard(post) {
   header.append(author, time);
   body.append(header, caption);
   article.append(image, body);
-  return article;
+  link.append(article);
+  return link;
 }
 
 function normalizePost(post) {

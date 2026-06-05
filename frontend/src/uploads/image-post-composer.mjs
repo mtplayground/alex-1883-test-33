@@ -116,7 +116,12 @@ export function collectPreviewUrlsForCleanup(state) {
   return [...state.retiredPreviewUrls, state.previewUrl].filter(Boolean);
 }
 
-export function createImagePostComposer({ currentUser, apiClient, maxCaptionLength = MAX_POST_CAPTION_LENGTH } = {}) {
+export function createImagePostComposer({
+  currentUser,
+  apiClient,
+  maxCaptionLength = MAX_POST_CAPTION_LENGTH,
+  onPostCreated,
+} = {}) {
   if (!globalThis.document) {
     throw new Error("createImagePostComposer requires a browser document");
   }
@@ -233,6 +238,7 @@ export function createImagePostComposer({ currentUser, apiClient, maxCaptionLeng
         caption: state.caption.trim(),
       });
       state = applyPostCreatedSuccess(state, createdPost);
+      onPostCreated?.(state.createdPost);
       fileInput.value = "";
       caption.value = state.caption;
     } catch (caught) {
