@@ -52,7 +52,7 @@ export function AppLayout() {
   );
 }
 
-export function getTopBarModel(authView, { signInUrl = "/auth/google" } = {}) {
+export function getTopBarModel(authView, { signInUrl = "/api/auth/google" } = {}) {
   if (authView.isLoading) {
     return {
       status: "loading",
@@ -98,7 +98,11 @@ function TopBarAccount({ model, onSignOut }) {
             loading: "lazy",
             src: model.avatarUrl,
           })
-        : React.createElement("span", { className: "app-account__initials", "aria-hidden": "true" }, initialsFor(model.label)),
+        : React.createElement(
+            "span",
+            { className: "app-account__initials", "aria-hidden": "true" },
+            initialsFor(model.label),
+          ),
       React.createElement(
         "div",
         { className: "app-account__body" },

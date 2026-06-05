@@ -3,14 +3,14 @@ import { normalizeProfileUser } from "./profile-page.mjs";
 export function createTopBarAuthState({
   currentUser = null,
   status = "signed-out",
-  signInUrl = "/auth/google",
+  signInUrl = "/api/auth/google",
   profileUrl = "/profile",
 } = {}) {
   const normalizedUser = currentUser ? normalizeProfileUser(currentUser) : null;
   return {
     currentUser: normalizedUser,
     status: normalizedUser ? "signed-in" : normalizeAuthStatus(status),
-    signInUrl: String(signInUrl || "/auth/google"),
+    signInUrl: String(signInUrl || "/api/auth/google"),
     profileUrl: String(profileUrl || "/profile"),
   };
 }
@@ -25,7 +25,7 @@ export function getTopBarAuthView(state) {
     isLoading: status === "loading",
     isSignedIn,
     isSignedOut: status === "signed-out",
-    signInUrl: state.signInUrl || "/auth/google",
+    signInUrl: state.signInUrl || "/api/auth/google",
     profileUrl: state.profileUrl || "/profile",
     buttonLabel: isSignedIn ? "Profile" : "Sign in",
     displayName: isSignedIn ? user.displayName : "",
@@ -185,7 +185,12 @@ export async function resolveAuthCallback({ url, apiClient, tokenStore, redirect
   }
 }
 
-export function createAuthCallbackPage({ url = globalThis.location?.href ?? "", apiClient, tokenStore, redirectTo = "/" } = {}) {
+export function createAuthCallbackPage({
+  url = globalThis.location?.href ?? "",
+  apiClient,
+  tokenStore,
+  redirectTo = "/",
+} = {}) {
   if (!globalThis.document) {
     throw new Error("createAuthCallbackPage requires a browser document");
   }
@@ -206,7 +211,7 @@ export function createAuthCallbackPage({ url = globalThis.location?.href ?? "", 
 
   const retry = document.createElement("a");
   retry.className = "auth-callback__retry";
-  retry.href = "/auth/google";
+  retry.href = "/api/auth/google";
   retry.textContent = "Sign in";
 
   root.append(message, error, retry);

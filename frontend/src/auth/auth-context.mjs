@@ -1,13 +1,20 @@
 import { createApiClient, createLocalStorageTokenStore } from "./api-client.mjs";
 import { normalizeProfileUser } from "./profile-page.mjs";
 
-export function createAuthState({ status = "loading", currentUser = null, token = "", errorMessage = "" } = {}) {
+export function createAuthState({
+  status = "loading",
+  currentUser = null,
+  token = "",
+  errorMessage = "",
+  redirectTo = "",
+} = {}) {
   const normalizedUser = currentUser ? normalizeProfileUser(currentUser) : null;
   return {
     status: normalizedUser ? "signed-in" : normalizeAuthStatus(status),
     currentUser: normalizedUser,
     token: token ? String(token) : "",
     errorMessage: errorMessage ? String(errorMessage) : "",
+    redirectTo: normalizeRedirectPath(redirectTo),
   };
 }
 
@@ -16,6 +23,7 @@ export function getAuthView(state) {
   return {
     status,
     currentUser: state.currentUser,
+    redirectTo: state.redirectTo || "",
     isLoading: status === "loading",
     isSignedIn: status === "signed-in" && Boolean(state.currentUser),
     isSignedOut: status === "signed-out",
@@ -27,7 +35,7 @@ export function getAuthView(state) {
 export function createAuthContext({
   apiClient,
   tokenStore = createLocalStorageTokenStore(),
-  signInUrl = "/auth/google",
+  signInUrl = "/api/auth/google",
   location = globalThis.location,
 } = {}) {
   const client = apiClient ?? createApiClient({ tokenStore });
@@ -53,7 +61,15 @@ export function createAuthContext({
     setState({ ...state, status: "loading" });
     try {
       const result = await client.getCurrentUser();
-      const user = readObject(result, ["user", "me", "currentUser", "data.user", "data.me", "data.currentUser", "data"]);
+      const user = readObject(result, [
+        "user",
+        "me",
+        "currentUser",
+        "data.user",
+        "data.me",
+        "data.currentUser",
+        "data",
+      ]);
       if (!user) {
         tokenStore.clearToken?.();
         return setState({ status: "signed-out" });
@@ -85,10 +101,12 @@ export function createAuthContext({
         tokenStore.saveToken?.(token);
       }
       const user = readObject(result, ["user", "currentUser", "data.user", "data.currentUser"]);
+      const redirectTo = readString(result, ["redirectTo", "data.redirectTo"]);
       return setState({
         status: user ? "signed-in" : "loading",
         currentUser: user,
         token,
+        redirectTo,
       });
     } catch (caught) {
       return setState({
@@ -180,7 +198,9 @@ function getByPath(value, path) {
 }
 
 function isUnauthenticatedError(error) {
-  return error?.status === 401 || error?.code === "UNAUTHENTICATED" || error?.response?.error?.code === "UNAUTHENTICATED";
+  return (
+    error?.status === 401 || error?.code === "UNAUTHENTICATED" || error?.response?.error?.code === "UNAUTHENTICATED"
+  );
 }
 
 function toSafeErrorMessage(error) {
@@ -188,4 +208,16 @@ function toSafeErrorMessage(error) {
     return String(error.message);
   }
   return "Unable to load session.";
+}
+
+function normalizeRedirectPath(value) {
+  if (!value) {
+    return "";
+  }
+  try {
+    const url = new URL(String(value), "http://local");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "";
+  }
 }
