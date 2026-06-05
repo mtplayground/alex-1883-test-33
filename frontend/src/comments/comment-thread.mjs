@@ -24,7 +24,8 @@ export function getCommentThreadView(state) {
       displayTime: formatCommentTimestamp(comment.createdAt),
     })),
     isEmpty: state.comments.length === 0,
-    canSubmit: Boolean(state.currentUser) && draft.length > 0 && draft.length <= MAX_COMMENT_LENGTH && !state.isSubmitting,
+    canSubmit:
+      Boolean(state.currentUser) && draft.length > 0 && draft.length <= MAX_COMMENT_LENGTH && !state.isSubmitting,
     remainingCharacters: MAX_COMMENT_LENGTH - state.draft.length,
     isOverLimit: state.draft.length > MAX_COMMENT_LENGTH,
     isSignedIn: Boolean(state.currentUser),
@@ -51,7 +52,7 @@ export function markCommentSubmitting(state) {
 export function appendComment(state, comment) {
   return {
     ...state,
-    comments: [...state.comments, normalizeComment(comment)],
+    comments: [...state.comments, normalizeComment(unwrapComment(comment))],
     draft: "",
     isSubmitting: false,
     errorMessage: "",
@@ -261,6 +262,13 @@ function normalizeComment(comment) {
       avatarUrl: comment.author.avatarUrl ? String(comment.author.avatarUrl) : "",
     },
   };
+}
+
+function unwrapComment(value) {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  return value.comment ?? value.data?.comment ?? value.data ?? value;
 }
 
 function canDeleteComment(currentUser, comment) {

@@ -36,7 +36,22 @@ test(
     const postId = extractId(post, ["post", "data"]);
     assert.ok(postId, "create post response must include a post id");
 
-    await client.postJson(`/users/${encodeURIComponent(targetUserId)}/follow`, {});
+    const follow = await client.postJson(`/users/${encodeURIComponent(targetUserId)}/follow`, {});
+    assert.equal(
+      extractString(follow, [
+        "targetUserId",
+        "followState.targetUserId",
+        "data.targetUserId",
+        "data.followState.targetUserId",
+      ]),
+      targetUserId,
+      "follow response must identify the followed user",
+    );
+    assert.equal(
+      extractBoolean(follow, ["isFollowing", "following", "followState.isFollowing", "data.isFollowing"]),
+      true,
+      "follow response must report the followed state",
+    );
 
     const feed = await client.get("/feed?limit=20");
     const feedItems = extractArray(feed, ["items", "posts", "data", "data.items", "data.posts"]);
@@ -63,6 +78,19 @@ test(
     assert.ok(
       commentItems.some((item) => item.content === commentText || item.text === commentText),
       "comment list must include the E2E comment",
+    );
+
+    const detail = await client.get(`/posts/${encodeURIComponent(postId)}`);
+    assert.equal(extractId(detail, ["post", "data.post", "data"]), postId, "post detail must include the created post");
+    assert.equal(
+      extractBoolean(detail, ["isLiked", "likeState.isLiked", "data.isLiked", "data.likeState.isLiked"]),
+      true,
+      "post detail must include the E2E like state",
+    );
+    const detailComments = extractArray(detail, ["comments", "post.comments", "data.comments", "data.post.comments"]);
+    assert.ok(
+      detailComments.some((item) => String(extractId(item, ["comment", "data"])) === String(commentId)),
+      "post detail must include the E2E comment",
     );
 
     await cleanup(client, { commentId, postId, targetUserId });
@@ -116,9 +144,7 @@ class E2eClient {
     const parsed = parseResponseBody(responseText);
 
     if (!expectedStatuses.includes(response.status)) {
-      throw new Error(
-        `${method} ${url.pathname} returned ${response.status}: ${responseText.slice(0, 500)}`,
-      );
+      throw new Error(`${method} ${url.pathname} returned ${response.status}: ${responseText.slice(0, 500)}`);
     }
 
     return parsed;
@@ -196,6 +222,16 @@ function extractNumber(value, paths) {
   for (const path of paths) {
     const candidate = getByPath(value, path);
     if (Number.isInteger(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+function extractBoolean(value, paths) {
+  for (const path of paths) {
+    const candidate = getByPath(value, path);
+    if (typeof candidate === "boolean") {
       return candidate;
     }
   }
