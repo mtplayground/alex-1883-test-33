@@ -6,6 +6,10 @@
   "scripts": {
     "build": "node scripts/validate-env.mjs --schema-only && node scripts/check-error-contract.mjs",
     "check": "npm run build",
+    "db:migrate": "prisma migrate deploy --schema prisma/schema.prisma",
+    "db:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "test": "npm run build && npm run test:backend && npm run test:frontend && npm run test:e2e",
     "test:backend": "node --test tests/backend/*.test.mjs",
     "test:e2e": "node --test tests/e2e/*.test.mjs",
@@ -14,7 +18,11 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.729.0",
-    "@aws-sdk/s3-request-presigner": "^3.729.0"
+    "@aws-sdk/s3-request-presigner": "^3.729.0",
+    "@prisma/client": "^7.4.1"
+  },
+  "devDependencies": {
+    "prisma": "^7.4.1"
   },
   "engines": {
     "node": ">=20"
