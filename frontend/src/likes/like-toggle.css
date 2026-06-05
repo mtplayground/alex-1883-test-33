@@ -1,0 +1,24 @@
+.like-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.like-toggle__button {
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.like-toggle__button[aria-pressed="true"] {
+  font-weight: 700;
+}
+
+.like-toggle__count {
+  color: #374151;
+  font-size: 0.9375rem;
+}
+
+.like-toggle__error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
