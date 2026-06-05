@@ -2,21 +2,25 @@
 
 ## What It Is
 
-`alex-1883-test-33` is a photo-sharing web application scaffold with a React frontend and an Express backend. The deployed app currently serves a styled React status shell from the backend root and exposes backend health checks.
+`alex-1883-test-33` is a photo-sharing web application with a React frontend and an Express backend. The current merged product focuses on the authenticated web experience: routing, sign-in state, profile display, image-post composition, feed browsing, and post interactions.
 
 ## Current Capabilities
 
-- `GET /` serves the built Vite frontend when `frontend/dist/index.html` exists.
-- `GET /healthz` and `GET /api/healthz` return JSON service health.
-- Unknown API/backend paths return the shared JSON `ApiError` envelope.
-- The React shell displays the project name and readiness status with CSS loaded from the Vite build.
-- Source modules and tests exist for the broader photo-sharing workflow: Google OAuth, JWT auth, user profiles, image upload, posts, feeds, follows, likes, and comments. These modules are not currently mounted by the main Express app.
+- The React app uses real routes for `/`, `/feed`, `/profile`, `/post/:id`, and `/auth/callback`.
+- The global layout shows top navigation plus a right-side Sign in entry or signed-in user menu.
+- Auth Context manages JWT-backed session loading, API client token attachment, sign-out, and Google sign-in redirects.
+- Protected routes gate `/feed`, `/profile`, and `/post/:id`; signed-in users entering `/` are sent to the feed.
+- The feed route combines image upload, post creation, paginated feed browsing, and links to post detail pages.
+- The post detail route assembles the PostCard, author follow control, like button, and comment thread against the shared API client.
+- The profile route displays the current user's avatar, email, name, and nickname-style fallback.
+- `GET /` serves the built Vite frontend when `frontend/dist/index.html` exists, and the backend provides `/healthz` plus `/api/healthz`.
+- Backend source modules and tests exist for Google OAuth, JWT auth, image uploads, posts, feed, follows, likes, and comments. The main Express app currently mounts health/static handling only; the domain API route modules are contract-tested but not yet composed into the production Express entrypoint.
 
 ## Architecture
 
 - Node.js ESM npm workspace monorepo.
-- `backend/` is the Express service, with `npm run dev:backend` and `npm run start` wiring the server to `0.0.0.0:8080` by default.
-- `frontend/` is a React app powered by Vite, with `npm run dev:frontend` serving on `0.0.0.0:5173`.
+- `backend/` is the Express service; `npm run start` serves on `0.0.0.0:8080` by default.
+- `frontend/` is a React app powered by Vite; `npm run dev:frontend` serves on `0.0.0.0:5173`.
 - In production, the backend serves static files from `frontend/dist` and falls back to the frontend shell for non-API, extensionless routes.
 - Persistent state is PostgreSQL only, accessed through Prisma and configured by `DATABASE_URL`.
 - Object Storage is S3-compatible via AWS SDK v3 and configured only through environment variables.
