@@ -11,3 +11,9 @@ node_modules/
 .pipeline-state.json
 .gitkeep
 .progress
+.env
+.env.local
+.env.*
+!.env.example
+.db_decision
+.storage_decision
