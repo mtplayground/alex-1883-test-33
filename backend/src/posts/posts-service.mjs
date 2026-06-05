@@ -18,6 +18,11 @@ export function createPostsService({ repository }) {
         caption: normalizedCaption,
       });
     },
+
+    async getPostDetail({ postId, viewerId = null }) {
+      assertId(postId, "postId");
+      return repository.getDetail({ postId, viewerId });
+    },
   };
 }
 
@@ -58,6 +63,81 @@ export function createPostgresPostsRepository(db) {
       }
       return mapPostRow(row);
     },
+
+    async getDetail({ postId, viewerId }) {
+      const postResult = await db.query(
+        `
+          SELECT
+            p.id,
+            p.author_id,
+            p.image_url,
+            p.caption,
+            p.created_at,
+            p.updated_at,
+            u.name AS author_name,
+            u.avatar_url AS author_avatar_url,
+            (SELECT count(*)::int FROM likes WHERE post_id = p.id) AS like_count,
+            CASE
+              WHEN $2::uuid IS NULL THEN false
+              ELSE EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2)
+            END AS is_liked,
+            (SELECT count(*)::int FROM follows WHERE followee_id = p.author_id) AS follower_count,
+            (SELECT count(*)::int FROM follows WHERE follower_id = p.author_id) AS following_count,
+            CASE
+              WHEN $2::uuid IS NULL THEN false
+              ELSE EXISTS(SELECT 1 FROM follows WHERE follower_id = $2 AND followee_id = p.author_id)
+            END AS is_following
+          FROM posts p
+          JOIN users u ON u.id = p.author_id
+          WHERE p.id = $1
+        `,
+        [postId, viewerId],
+      );
+
+      const postRow = postResult.rows[0];
+      if (!postRow) {
+        throw new ApiError(404, "NOT_FOUND", "Post not found");
+      }
+
+      const commentsResult = await db.query(
+        `
+          SELECT
+            c.id,
+            c.post_id,
+            c.author_id,
+            c.content,
+            c.created_at,
+            c.updated_at,
+            u.name AS author_name,
+            u.avatar_url AS author_avatar_url
+          FROM comments c
+          JOIN users u ON u.id = c.author_id
+          WHERE c.post_id = $1
+          ORDER BY c.created_at ASC, c.id ASC
+        `,
+        [postId],
+      );
+
+      const followerCount = Number(postRow.follower_count);
+      const followingCount = Number(postRow.following_count);
+
+      return {
+        post: mapPostRow(postRow),
+        comments: commentsResult.rows.map(mapCommentRow),
+        likeCount: Number(postRow.like_count),
+        isLiked: Boolean(postRow.is_liked),
+        authorStats: {
+          followerCount,
+          followingCount,
+        },
+        followState: {
+          targetUserId: postRow.author_id,
+          isFollowing: Boolean(postRow.is_following),
+          followerCount,
+          followingCount,
+        },
+      };
+    },
   };
 }
 
@@ -91,6 +171,21 @@ function mapPostRow(row) {
     id: row.id,
     imageUrl: row.image_url,
     caption: row.caption || "",
+    createdAt: toIsoString(row.created_at),
+    updatedAt: toIsoString(row.updated_at),
+    author: {
+      id: row.author_id,
+      name: row.author_name || "Unknown user",
+      avatarUrl: row.author_avatar_url || "",
+    },
+  };
+}
+
+function mapCommentRow(row) {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    content: row.content,
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
     author: {

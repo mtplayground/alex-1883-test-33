@@ -190,25 +190,27 @@ function FeedRoute() {
     {
       eyebrow: "Feed",
       title: "Feed",
-      description: "Browse paginated posts from the current user and followed accounts.",
+      description: "Create an image post and browse updates from your account and followed users.",
     },
     React.createElement(DomPageMount, { factory: mountFeedPage }),
   );
 }
 
 function ProfileRoute() {
+  const apiClient = useAppApiClient();
   const { authView } = useAuthSession();
   const mountProfilePage = useMemo(
     () => () => {
-      const page = createProfilePage({ currentUser: authView.currentUser });
+      const page = createProfilePage({ apiClient, currentUser: authView.currentUser });
       if (authView.currentUser) {
         page.setState({ currentUser: authView.currentUser });
       } else {
         page.setState({ status: "signed-out" });
       }
+      void page.refresh();
       return page;
     },
-    [authView.currentUser],
+    [apiClient, authView.currentUser],
   );
 
   return React.createElement(
@@ -216,7 +218,7 @@ function ProfileRoute() {
     {
       eyebrow: "Profile",
       title: "Profile",
-      description: "Current-user profile route mounted for the authenticated profile experience.",
+      description: "Review the signed-in Google profile details loaded from the API.",
     },
     React.createElement(DomPageMount, { factory: mountProfilePage }),
   );
@@ -242,7 +244,7 @@ function PostDetailRoute() {
     {
       eyebrow: "Post detail",
       title: "Post detail",
-      description: "Post card, author follow control, likes, and comments are assembled on this route.",
+      description: "View the selected photo with follow, like, and comment controls.",
     },
     postId
       ? React.createElement(DomPageMount, { factory: mountPostDetailPage })
@@ -413,7 +415,7 @@ function RouteShell({ eyebrow, title, description, children }) {
       React.createElement("p", { className: "app-eyebrow" }, eyebrow),
       React.createElement("h1", { id: "route-title" }, title),
       React.createElement("p", null, description),
-      React.createElement(Link, { className: "route-action", to: "/" }, "All routes"),
+      React.createElement(Link, { className: "route-action", to: "/" }, "Home"),
     ),
     children,
   );
