@@ -5,15 +5,19 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/validate-env.mjs --schema-only && node scripts/check-error-contract.mjs",
-    "check": "npm run build",
+    "check": "npm run build && npm run typecheck && npm run lint && npm run format:check",
     "db:migrate": "prisma migrate deploy --schema prisma/schema.prisma",
     "db:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "test": "npm run build && npm run test:backend && npm run test:frontend && npm run test:e2e",
     "test:backend": "node --test tests/backend/*.test.mjs",
     "test:e2e": "node --test tests/e2e/*.test.mjs",
     "test:frontend": "node --test tests/frontend/*.test.mjs",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
     "validate:env": "node scripts/validate-env.mjs"
   },
   "dependencies": {
@@ -22,7 +26,14 @@
     "@prisma/client": "^7.4.1"
   },
   "devDependencies": {
-    "prisma": "^7.4.1"
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.10.7",
+    "eslint": "^9.39.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "prisma": "^7.4.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.19.1"
   },
   "engines": {
     "node": ">=20"
