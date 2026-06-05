@@ -9,6 +9,7 @@ import { APP_ROUTES } from "./app-routes.mjs";
 import { createFeedPage } from "./feed/feed-page.mjs";
 import { AppLayout } from "./layout/app-layout.mjs";
 import { createPostDetailPage } from "./posts/post-detail-page.mjs";
+import { createImagePostComposer } from "./uploads/image-post-composer.mjs";
 
 import "./auth/profile-page.css";
 import "./auth/sign-in-flow.css";
@@ -18,6 +19,7 @@ import "./follows/follow-toggle.css";
 import "./likes/like-toggle.css";
 import "./posts/post-card.css";
 import "./posts/post-detail-page.css";
+import "./uploads/image-post-composer.css";
 
 export { APP_ROUTES };
 
@@ -137,13 +139,36 @@ function SignInRedirect({ signInUrl }) {
 
 function FeedRoute() {
   const apiClient = useAppApiClient();
+  const { authView } = useAuthSession();
   const mountFeedPage = useMemo(
-    () => () =>
-      createFeedPage({
+    () => () => {
+      const root = document.createElement("section");
+      root.className = "feed-workflow";
+      root.setAttribute("aria-label", "Create and browse posts");
+
+      const feedPage = createFeedPage({
         apiClient,
         initialPosts: [],
-      }),
-    [apiClient],
+      });
+      const composer = createImagePostComposer({
+        apiClient,
+        currentUser: authView.currentUser,
+        onPostCreated(createdPost) {
+          feedPage.prependPost(createdPost);
+        },
+      });
+
+      root.append(composer.element, feedPage.element);
+
+      return {
+        element: root,
+        disconnect() {
+          composer.destroy();
+          feedPage.disconnect();
+        },
+      };
+    },
+    [apiClient, authView.currentUser],
   );
 
   return React.createElement(

@@ -106,6 +106,20 @@ test("successful submit clears selected image and caption without marking previe
   assert.deepEqual(success.retiredPreviewUrls, ["blob:preview-1"]);
 });
 
+test("successful submit exposes the created post for feed prepending", () => {
+  const success = applyPostCreatedSuccess(createImagePostComposerState({ currentUser }), {
+    post: {
+      id: "post_1",
+      imageUrl: "https://example.com/post_1.png",
+      caption: "created",
+      author: currentUser,
+    },
+  });
+
+  assert.equal(success.createdPost.id, "post_1");
+  assert.equal(success.createdPost.caption, "created");
+});
+
 test("removeSelectedImage returns the preview URL for explicit user-driven revoke", () => {
   const selected = selectImageFile(createImagePostComposerState({ currentUser }), {
     file: imageFile,

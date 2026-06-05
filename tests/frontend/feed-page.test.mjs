@@ -7,6 +7,7 @@ import {
   getFeedView,
   markFeedLoading,
   normalizeFeedPage,
+  prependFeedPost,
 } from "../../frontend/src/feed/feed-page.mjs";
 
 const createdAt = "2026-06-05T03:00:00.000Z";
@@ -61,6 +62,24 @@ test("appendFeedPage clears pagination when no next cursor exists", () => {
   assert.equal(next.isLoading, false);
   assert.equal(next.hasNextPage, false);
   assert.equal(getFeedView(next).canLoadMore, false);
+});
+
+test("prependFeedPost adds newly created posts and deduplicates existing posts", () => {
+  const state = createFeedState({
+    posts: [post({ id: "post_1" }), post({ id: "post_2" })],
+  });
+
+  const withNewPost = prependFeedPost(state, post({ id: "post_3" }));
+  assert.deepEqual(
+    withNewPost.posts.map((item) => item.id),
+    ["post_3", "post_1", "post_2"],
+  );
+
+  const withExistingPost = prependFeedPost(withNewPost, post({ id: "post_1" }));
+  assert.deepEqual(
+    withExistingPost.posts.map((item) => item.id),
+    ["post_1", "post_3", "post_2"],
+  );
 });
 
 test("failFeedLoad keeps existing posts and shows a safe error", () => {
