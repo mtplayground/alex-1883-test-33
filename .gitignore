@@ -1,5 +1,6 @@
 target/
 node_modules/
+frontend/dist/
 backend/src/generated/prisma/
 .gh_token
 .claude/
