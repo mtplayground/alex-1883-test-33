@@ -15,8 +15,17 @@ export function createPostsHandlers({ postsService, logger = console }) {
     return json(201, { post: result });
   }
 
+  async function getPostDetail(request) {
+    const result = await postsService.getPostDetail({
+      postId: request.params.postId,
+      viewerId: request.user?.id ?? null,
+    });
+    return json(200, result);
+  }
+
   return {
     createPost,
+    getPostDetail,
     async handle(request) {
       try {
         const match = matchPostsRoute(request.method, request.path);
@@ -29,7 +38,10 @@ export function createPostsHandlers({ postsService, logger = console }) {
           params: match.params,
         };
 
-        return await createPost(nextRequest);
+        if (match.action === "createPost") {
+          return await createPost(nextRequest);
+        }
+        return await getPostDetail(nextRequest);
       } catch (error) {
         if (!(error instanceof ApiError)) {
           logUnhandledError(error, request.requestId, logger);
@@ -46,6 +58,13 @@ export function matchPostsRoute(method, path) {
     return {
       action: "createPost",
       params: {},
+    };
+  }
+  const detailMatch = url.pathname.match(/^\/posts\/([^/]+)\/?$/);
+  if (detailMatch && method === "GET") {
+    return {
+      action: "getPostDetail",
+      params: { postId: decodeURIComponent(detailMatch[1]) },
     };
   }
   return null;

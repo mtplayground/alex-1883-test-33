@@ -167,6 +167,9 @@ export function createFeedPage({ apiClient, initialPosts = [], nextCursor = null
   }
 
   render();
+  if (state.posts.length === 0) {
+    void loadNextPage();
+  }
 
   return {
     element: root,
