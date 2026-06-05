@@ -2,26 +2,22 @@
 
 ## What It Is
 
-`alex-1883-test-33` is a photo-sharing web application scaffold with a React frontend and an Express backend. It supports the core social workflow: Google sign-in, authenticated image upload, post creation, profile display, follow relationships, personalized feed loading, likes, and comments.
+`alex-1883-test-33` is a photo-sharing web application scaffold with a React frontend and an Express backend. The deployed app currently serves a styled React status shell from the backend root and exposes backend health checks.
 
 ## Current Capabilities
 
-- Google OAuth backend callback flow upserts users by `google_id` and issues JWTs.
-- JWT middleware protects backend routes and the frontend API client carries bearer tokens.
-- User profiles expose avatar, email, display name, and nickname-friendly fields.
-- Images upload through an S3-compatible Object Storage client with prefixed keys, concrete content length, and signed/public access URL support.
-- Posts persist author, image URL, caption, and timestamps.
-- Feed API returns the current user's posts plus followed users' posts in reverse chronological paginated order.
-- Follow/unfollow APIs expose follower and following counts.
-- Like/unlike APIs expose post like counts.
-- Comment APIs create, list, and delete post comments.
-- Frontend modules cover sign-in, auth state, profile display, image post composition, post cards, feed loading, follow toggles, like toggles, and comment threads.
+- `GET /` serves the built Vite frontend when `frontend/dist/index.html` exists.
+- `GET /healthz` and `GET /api/healthz` return JSON service health.
+- Unknown API/backend paths return the shared JSON `ApiError` envelope.
+- The React shell displays the project name and readiness status with CSS loaded from the Vite build.
+- Source modules and tests exist for the broader photo-sharing workflow: Google OAuth, JWT auth, user profiles, image upload, posts, feeds, follows, likes, and comments. These modules are not currently mounted by the main Express app.
 
 ## Architecture
 
 - Node.js ESM npm workspace monorepo.
 - `backend/` is the Express service, with `npm run dev:backend` and `npm run start` wiring the server to `0.0.0.0:8080` by default.
 - `frontend/` is a React app powered by Vite, with `npm run dev:frontend` serving on `0.0.0.0:5173`.
+- In production, the backend serves static files from `frontend/dist` and falls back to the frontend shell for non-API, extensionless routes.
 - Persistent state is PostgreSQL only, accessed through Prisma and configured by `DATABASE_URL`.
 - Object Storage is S3-compatible via AWS SDK v3 and configured only through environment variables.
 - Configuration is centralized in `backend/src/config/app-config.mjs` and documented in `.env.example`.
