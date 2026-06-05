@@ -1,0 +1,25 @@
+.follow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.follow-toggle__button {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.follow-toggle__button[aria-pressed="true"] {
+  font-weight: 700;
+}
+
+.follow-toggle__counts {
+  color: #374151;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.follow-toggle__error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
