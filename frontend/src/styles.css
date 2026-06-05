@@ -192,6 +192,43 @@ textarea {
   line-height: 1.55;
 }
 
+.app-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.app-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  max-width: 960px;
+}
+
+.app-feature-card {
+  display: grid;
+  gap: 8px;
+  min-height: 128px;
+  align-content: start;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.app-feature-card h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.app-feature-card p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
 .route-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -245,6 +282,12 @@ textarea {
   min-height: 40px;
   padding: 0 14px;
   font-weight: 700;
+}
+
+.route-action--primary {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
 }
 
 .route-panel,

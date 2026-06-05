@@ -79,28 +79,40 @@ function HomeRoute() {
     React.createElement(
       "section",
       { className: "app-hero" },
-      React.createElement("p", { className: "app-eyebrow" }, "Photo sharing routes"),
-      React.createElement("h1", { id: "home-title" }, "alex-1883-test-33"),
+      React.createElement("p", { className: "app-eyebrow" }, "Photo sharing"),
+      React.createElement("h1", { id: "home-title" }, "Share photos with the people you follow"),
       React.createElement(
         "p",
         { className: "app-hero__copy" },
-        "The routed application shell is active. Use the primary routes below to enter feed, profile, post, or sign-in callback flows.",
+        "Post images, follow other creators, and keep up with a focused feed of photo updates.",
+      ),
+      React.createElement(
+        "div",
+        { className: "app-hero__actions" },
+        React.createElement(Link, { className: "route-action route-action--primary", to: "/feed" }, "Open feed"),
+        React.createElement("a", { className: "route-action", href: "/auth/google?next=%2Ffeed" }, "Sign in"),
       ),
     ),
     React.createElement(
-      "nav",
-      { className: "route-grid", "aria-label": "Application routes" },
-      APP_ROUTES.filter((route) => route.path !== "/").map((route) =>
-        React.createElement(
-          Link,
-          {
-            className: "route-link",
-            key: route.path,
-            to: route.path === "/post/:id" ? "/post/example-post" : route.path,
-          },
-          React.createElement("span", { className: "route-link__label" }, route.label),
-          React.createElement("span", { className: "route-link__path" }, route.path),
-        ),
+      "section",
+      { className: "app-feature-grid", "aria-label": "Core features" },
+      React.createElement(
+        "article",
+        { className: "app-feature-card" },
+        React.createElement("h2", null, "Photo posts"),
+        React.createElement("p", null, "Create image posts with captions and keep the latest updates easy to scan."),
+      ),
+      React.createElement(
+        "article",
+        { className: "app-feature-card" },
+        React.createElement("h2", null, "Focused feed"),
+        React.createElement("p", null, "Browse your posts and followed accounts in one paginated timeline."),
+      ),
+      React.createElement(
+        "article",
+        { className: "app-feature-card" },
+        React.createElement("h2", null, "Social actions"),
+        React.createElement("p", null, "Like, comment, and follow directly from post detail views."),
       ),
     ),
   );
@@ -260,7 +272,7 @@ function AuthStartRoute() {
       React.createElement(
         "p",
         null,
-        "The authentication handoff is ready. Continue when Google OAuth credentials are configured for this environment.",
+        "Google OAuth credentials are not configured for this deployment, so sign in is unavailable until those external credentials are provided.",
       ),
       React.createElement(Link, { className: "route-action", to: next }, "Return to requested route"),
     ),
