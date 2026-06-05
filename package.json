@@ -3,11 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "build": "node scripts/validate-env.mjs --schema-only && node scripts/check-error-contract.mjs",
+    "build:backend": "npm --workspace backend run build",
+    "build:frontend": "npm --workspace frontend run build",
     "check": "npm run build && npm run typecheck && npm run lint && npm run format:check",
     "db:migrate": "prisma migrate deploy --schema prisma/schema.prisma",
     "db:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
+    "dev": "npm run dev:backend",
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:frontend": "npm --workspace frontend run dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -18,7 +27,8 @@
     "test:e2e": "node --test tests/e2e/*.test.mjs",
     "test:frontend": "node --test tests/frontend/*.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "validate:env": "node scripts/validate-env.mjs"
+    "validate:env": "node scripts/validate-env.mjs",
+    "start": "npm --workspace backend run start"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.729.0",

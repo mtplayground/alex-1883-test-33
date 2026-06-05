@@ -1,0 +1,50 @@
+:root {
+  color: #1f2933;
+  background: #f7f8fa;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  gap: 24px;
+  min-height: 100vh;
+  align-content: start;
+  padding: 32px;
+}
+
+.app-header {
+  display: grid;
+  gap: 8px;
+}
+
+.app-header h1,
+.app-header p,
+.app-panel h2,
+.app-panel p {
+  margin: 0;
+}
+
+.app-header h1 {
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.app-header p,
+.app-panel p {
+  color: #52606d;
+}
+
+.app-panel {
+  display: grid;
+  gap: 8px;
+  max-width: 640px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 20px;
+}
