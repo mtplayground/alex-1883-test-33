@@ -1,4 +1,7 @@
 import crypto from "node:crypto";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import express from "express";
 
@@ -9,6 +12,8 @@ import { ApiError, logUnhandledError, toErrorResponse } from "../../scripts/erro
  */
 export function createExpressApp({ logger = console } = {}) {
   const app = express();
+  const frontendDistPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../frontend/dist");
+  const frontendIndexPath = path.join(frontendDistPath, "index.html");
 
   app.disable("x-powered-by");
   app.use(assignRequestId);
@@ -16,6 +21,13 @@ export function createExpressApp({ logger = console } = {}) {
 
   app.get("/healthz", healthCheckHandler);
   app.get("/api/healthz", healthCheckHandler);
+
+  if (existsSync(frontendIndexPath)) {
+    app.use(express.static(frontendDistPath));
+    app.get(/^\/(?!api\/)(?!.*\.[^/]+$).*/, (_request, response) => {
+      response.sendFile(frontendIndexPath);
+    });
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler(logger));
