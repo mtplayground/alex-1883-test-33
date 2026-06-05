@@ -6,10 +6,10 @@
 
 ## Current Capabilities
 
-- The React app uses real routes for `/`, `/feed`, `/profile`, `/post/:id`, and `/auth/callback`.
+- The React app uses real routes for `/`, `/feed`, `/profile`, `/post/:id`, `/auth/google`, and `/auth/callback`.
 - The global layout shows top navigation plus a right-side Sign in entry or signed-in user menu.
 - Auth Context manages JWT-backed session loading, API client token attachment, sign-out, and Google sign-in redirects.
-- Protected routes gate `/feed`, `/profile`, and `/post/:id`; signed-in users entering `/` are sent to the feed.
+- Protected routes gate `/feed`, `/profile`, and `/post/:id`; signed-out users are sent to the Google sign-in start route, and signed-in users entering `/` are sent to the feed.
 - The feed route combines image upload, post creation, paginated feed browsing, and links to post detail pages.
 - The post detail route assembles the PostCard, author follow control, like button, and comment thread against the shared API client.
 - The profile route displays the current user's avatar, email, name, and nickname-style fallback.
@@ -22,7 +22,7 @@
 - `backend/` is the Express service; `npm run start` serves on `0.0.0.0:8080` by default.
 - `frontend/` is a React app powered by Vite; `npm run dev:frontend` serves on `0.0.0.0:5173`.
 - In production, the backend serves static files from `frontend/dist` and falls back to the frontend shell for non-API, extensionless routes.
-- Persistent state is PostgreSQL only, accessed through Prisma and configured by `DATABASE_URL`.
+- Persistent state is PostgreSQL only, accessed through Prisma 6.x and configured by `DATABASE_URL`.
 - Object Storage is S3-compatible via AWS SDK v3 and configured only through environment variables.
 - Configuration is centralized in `backend/src/config/app-config.mjs` and documented in `.env.example`.
 - Shared API errors use the `ApiError` envelope and log unexpected 500s with name, code, message, and stack.
