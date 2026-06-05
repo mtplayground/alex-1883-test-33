@@ -1,0 +1,14 @@
+{
+  "name": "alex-1883-test-33",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/validate-env.mjs --schema-only && node scripts/check-error-contract.mjs",
+    "check": "npm run build",
+    "validate:env": "node scripts/validate-env.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
