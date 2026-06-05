@@ -92,7 +92,7 @@ function createHandlerRegistry({ env, logger, db, jwtService, storage, fetchFn }
     if (!pool) {
       const databaseUrl = readPrismaDatabaseUrl(env);
       pool = new Pool({
-        connectionString: databaseUrl,
+        connectionString: toPgConnectionString(databaseUrl),
         ssl: shouldUseSsl(databaseUrl) ? { rejectUnauthorized: false } : undefined,
       });
     }
@@ -251,4 +251,10 @@ function shouldUseSsl(databaseUrl) {
   const parsed = new URL(databaseUrl);
   const sslMode = parsed.searchParams.get("sslmode");
   return sslMode === "require" || !["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
+}
+
+function toPgConnectionString(databaseUrl) {
+  const parsed = new URL(databaseUrl);
+  parsed.searchParams.delete("sslmode");
+  return parsed.toString();
 }
