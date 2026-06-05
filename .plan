@@ -1,73 +1,36 @@
-Architecture plan
+Architecture plan for issues #63-#67
 
-Product/source of truth
-- Product naming must come only from issue text and PRODUCT.md. PRODUCT.md is not present in the repository at setup time, so implementation should avoid introducing a product/brand name until that file or a future issue provides one.
-- Current tracked repository content is minimal: README.md only. Issues specify a React frontend and Express backend.
+Project baseline
+- Product name is alex-1883-test-33.
+- Monorepo uses Node ESM workspaces: frontend/ is React + Vite, backend/ is Express.
+- Backend serves frontend/dist at / in production and keeps /api/* available for JSON APIs.
+- Existing frontend modules already include auth context/client, sign-in flow, profile page, feed page, post card, image composer, follow toggle, like toggle, and comment thread.
 
-Repository/module structure
-- Root
-  - package.json: workspace scripts for install, lint, typecheck, test, dev, build.
-  - .env.example: documented DB, storage, Google OAuth, JWT, frontend/backend URL settings.
-  - frontend/: React + TypeScript app.
-    - src/app/: routing, top-level layout, auth provider wiring.
-    - src/api/: typed API client, request helpers, auth token attachment, error normalization.
-    - src/auth/: AuthContext, login callback handling, session persistence.
-    - src/components/: shared UI primitives plus domain components such as PostCard, FollowButton, LikeButton, CommentList.
-    - src/pages/: feed, profile, upload, auth callback.
-    - src/types/: frontend-facing DTOs imported from or aligned with shared contracts.
-    - src/test/: component test setup and utilities.
-  - backend/: Express + TypeScript API.
-    - src/server.ts: process entrypoint and listener.
-    - src/app.ts: Express app assembly, middleware, routes, error handler.
-    - src/config/: environment parsing and validation.
-    - src/db/: Prisma client singleton and database utilities.
-    - src/storage/: S3-compatible object storage client, upload helper, public/signed URL handling.
-    - src/auth/: Google OAuth flow, JWT issue/verify helpers, auth middleware.
-    - src/modules/users/: user service, routes, DTO mapping.
-    - src/modules/posts/: upload/create/list post services and routes.
-    - src/modules/follows/: follow/unfollow/count services and routes.
-    - src/modules/likes/: like/unlike/count services and routes.
-    - src/modules/comments/: create/list/delete comment services and routes.
-    - src/modules/feed/: paginated feed aggregation service and routes.
-    - src/middleware/: request logging, auth, validation, error handling.
-    - src/types/: request user augmentation and shared backend types.
-    - tests/: service/unit tests.
-  - backend/prisma/
-    - schema.prisma: User, Post, Follow, Like, Comment models.
-    - migrations/: Prisma migrations created issue by issue.
-  - shared/ or packages/shared/: shared API DTOs and validation schemas if the first implementation issue sets up workspaces. Otherwise keep DTOs duplicated narrowly until a shared package is justified.
+Issue order and dependencies
+1. #63 replaces the scaffold App with a real React Router app and route table.
+2. #64 adds the shared Layout/top bar on top of the router from #63.
+3. #65 wraps protected routes using the existing Auth Context and controls unauthenticated redirects.
+4. #66 composes the post detail route from existing post, like, comment, and follow modules.
+5. #67 performs end-to-end smoke wiring across login, top bar state, posting, feed, likes, and comments.
 
-Data model outline
-- User: id, googleId unique, email unique, name, avatarUrl, createdAt, updatedAt.
-- Post: id, authorId, imageUrl, caption optional, createdAt, updatedAt; indexed by authorId and createdAt.
-- Follow: followerId, followeeId, createdAt; composite unique followerId+followeeId; prevent self-follow in service logic.
-- Like: userId, postId, createdAt; composite unique userId+postId.
-- Comment: id, postId, authorId, content, createdAt, updatedAt.
+Frontend module structure
+- Keep application routing in frontend/src/App.mjs.
+- Add route/page files only when an existing module is not enough; prefer reusing:
+  - frontend/src/feed/feed-page.mjs for /feed
+  - frontend/src/auth/profile-page.mjs for /profile
+  - frontend/src/auth/sign-in-flow.mjs for /auth/callback
+  - frontend/src/posts/post-card.mjs plus likes/comments/follows modules for /post/:id
+- Add a layout module under frontend/src/layout/ for global navigation shared by all routes.
+- Keep CSS alongside each component and import it from the component/module that owns the styles.
 
-API shape
-- Auth: GET /auth/google/start, GET /auth/google/callback, GET /me.
-- Upload/posts: POST /uploads/images, POST /posts, GET /posts/:id, GET /users/:id/posts.
-- Follows: POST /users/:id/follow, DELETE /users/:id/follow, GET /users/:id/follow-counts.
-- Feed: GET /feed?cursor=&limit=.
-- Likes: POST /posts/:id/like, DELETE /posts/:id/like, GET /posts/:id/likes.
-- Comments: GET /posts/:id/comments, POST /posts/:id/comments, DELETE /comments/:id.
-- Responses should use consistent JSON envelopes and central error mapping by Issue #31.
-
-Issue dependency plan
-- Foundation: #1 creates frontend/backend structure; #2 adds TypeScript, ESLint, Prettier; #5 adds env contract; #3 adds Prisma/PostgreSQL; #4 adds object storage.
-- Auth/user base: #6 depends on Prisma; #7 depends on users/env; #8 depends on OAuth; #9 creates frontend auth client; #10 and #11 consume frontend auth.
-- Posting: #12 defines posts; #13 uploads images using storage and auth; #14 creates posts; #15 builds upload UI; #16 renders post cards.
-- Follows/feed: #17 defines follows; #18 exposes follow APIs; #19 adds follow UI; #20 builds feed from current user plus followees; #21 builds feed UI.
-- Likes: #22 defines likes; #23 exposes like APIs and counts; #24 adds frontend like controls.
-- Comments: #25 defines comments; #26 exposes comment APIs; #27 adds frontend comment UI.
-- Quality/release: #28 backend unit tests after services exist; #29 frontend component tests after key UI exists; #30 E2E after full workflow exists; #31 final error handling and self-host deployment review.
+Backend/API assumptions
+- Do not invent alternate product names or placeholder auth/storage/database behavior.
+- PostgreSQL remains the only persistent database; Object Storage remains the only binary storage path.
+- Route implementation work should mount existing backend routers into backend/src/app.mjs only when the issue scope calls for it.
+- Preserve existing error-envelope behavior and health routes.
 
 Key design decisions
-- Keep backend business rules in services and route handlers thin. This makes #28 service tests practical and prevents duplicated rules across endpoints.
-- Use Prisma composite unique constraints for Follow and Like idempotency, with services translating constraint failures into stable API responses.
-- Use cursor pagination for feed/posts/comments where chronological ordering matters. Use createdAt plus id as a stable cursor to avoid skipped/duplicated rows.
-- Store uploaded image metadata as URLs on Post; keep binary storage in object storage only.
-- Keep JWT in frontend-managed session storage/local storage only if required by the initial auth implementation; prefer a single API client abstraction so storage choice can change later without touching components.
-- Centralize env validation early so later issues fail fast in local and self-hosted deployments.
-- Normalize API errors in backend and frontend. Backend returns structured codes/messages; frontend API client maps them to component-friendly errors.
-- Prefer integration between shared DTO/validation schemas and API client once workspaces exist. If workspace setup is delayed, keep explicit TypeScript interfaces near the API client and reconcile with backend route DTOs during test issues.
+- Use react-router for route ownership and navigation; avoid ad hoc hash routing.
+- Protected-route behavior should be declarative and built on the existing AuthProvider state.
+- Keep the deployed backend as the single public service: API routes under /api/*, frontend static shell for non-API routes.
+- Prefer small composition work over rewrites; most feature pieces already exist and need routing/layout/data wiring.
