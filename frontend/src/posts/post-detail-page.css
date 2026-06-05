@@ -1,0 +1,39 @@
+.post-detail-page {
+  display: grid;
+  gap: 16px;
+}
+
+.post-detail-page__content {
+  display: grid;
+  gap: 16px;
+}
+
+.post-detail-page__controls,
+.post-detail-page__comments {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.post-detail-page__controls {
+  align-items: center;
+}
+
+.post-detail-page__comments h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.125rem;
+  line-height: 1.25;
+}
+
+.post-detail-page__status,
+.post-detail-page__error {
+  margin: 0;
+}
+
+.post-detail-page__error {
+  color: #b91c1c;
+}

@@ -57,6 +57,9 @@ export function createApiClient({ baseUrl = "/", tokenStore, fetchFn = globalThi
       }
       return client.request(`/feed${params.size ? `?${params.toString()}` : ""}`);
     },
+    getPost(postId) {
+      return client.request(`/posts/${encodeURIComponent(postId)}`);
+    },
     followUser(userId) {
       return client.request(`/users/${encodeURIComponent(userId)}/follow`, {
         method: "POST",
@@ -110,10 +113,7 @@ export function createMemoryTokenStore(initialToken = "") {
   };
 }
 
-export function createLocalStorageTokenStore({
-  storage = globalThis.localStorage,
-  key = "auth_token",
-} = {}) {
+export function createLocalStorageTokenStore({ storage = globalThis.localStorage, key = "auth_token" } = {}) {
   if (!storage) {
     return createMemoryTokenStore();
   }
