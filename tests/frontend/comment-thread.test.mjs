@@ -73,10 +73,7 @@ test("comment list marks only author-owned comments as deletable", () => {
   const state = createCommentThreadState({
     postId: "post_1",
     currentUser,
-    comments: [
-      comment({ id: "comment_1", author: currentUser }),
-      comment({ id: "comment_2", author: otherUser }),
-    ],
+    comments: [comment({ id: "comment_1", author: currentUser }), comment({ id: "comment_2", author: otherUser })],
   });
 
   const view = getCommentThreadView(state);
@@ -110,6 +107,29 @@ test("appendComment adds the submitted comment and clears input state", () => {
   assert.equal(getCommentThreadView(next).isEmpty, false);
 });
 
+test("appendComment accepts the backend create-comment response envelope", () => {
+  const drafting = markCommentSubmitting(
+    setCommentDraft(
+      createCommentThreadState({
+        postId: "post_1",
+        currentUser,
+        comments: [],
+      }),
+      "Wrapped comment",
+    ),
+  );
+
+  const next = appendComment(drafting, {
+    comment: comment({ id: "comment_4", author: currentUser, content: "Wrapped comment" }),
+  });
+
+  assert.equal(next.comments.length, 1);
+  assert.equal(next.comments[0].id, "comment_4");
+  assert.equal(next.comments[0].content, "Wrapped comment");
+  assert.equal(next.draft, "");
+  assert.equal(next.isSubmitting, false);
+});
+
 test("failed comment submit preserves the draft and exposes a safe error", () => {
   const drafting = markCommentSubmitting(
     setCommentDraft(
@@ -133,10 +153,7 @@ test("removeComment removes only the selected comment", () => {
   const state = createCommentThreadState({
     postId: "post_1",
     currentUser,
-    comments: [
-      comment({ id: "comment_1", author: currentUser }),
-      comment({ id: "comment_2", author: otherUser }),
-    ],
+    comments: [comment({ id: "comment_1", author: currentUser }), comment({ id: "comment_2", author: otherUser })],
   });
 
   const next = removeComment(state, "comment_1");
