@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/validate-env.mjs --schema-only && node scripts/check-error-contract.mjs",
     "check": "npm run build",
-    "test": "npm run build && npm run test:frontend && npm run test:e2e",
+    "test": "npm run build && npm run test:backend && npm run test:frontend && npm run test:e2e",
+    "test:backend": "node --test tests/backend/*.test.mjs",
     "test:e2e": "node --test tests/e2e/*.test.mjs",
     "test:frontend": "node --test tests/frontend/*.test.mjs",
     "validate:env": "node scripts/validate-env.mjs"
