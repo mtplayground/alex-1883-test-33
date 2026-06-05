@@ -26,9 +26,132 @@ textarea {
 .app-shell {
   display: grid;
   gap: 28px;
-  min-height: 100vh;
   align-content: start;
   padding: 32px;
+}
+
+.app-layout {
+  min-height: 100vh;
+  background: #f6f7f9;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  min-height: 64px;
+  border-bottom: 1px solid #d7dde5;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0 32px;
+}
+
+.app-topbar__brand {
+  color: #111827;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-topbar__nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-topbar__nav-link {
+  border-radius: 8px;
+  color: #4b5563;
+  min-height: 36px;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.app-topbar__nav-link--active {
+  background: #eef2f7;
+  color: #111827;
+  font-weight: 700;
+}
+
+.app-account {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.app-account__avatar,
+.app-account__initials {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.app-account__avatar {
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.app-account__initials {
+  display: grid;
+  place-items: center;
+  background: #111827;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.app-account__body {
+  display: grid;
+  min-width: 0;
+}
+
+.app-account__name,
+.app-account__sign-in,
+.app-account__sign-out {
+  color: #111827;
+  font-weight: 700;
+}
+
+.app-account__name,
+.app-account__sign-in {
+  text-decoration: none;
+}
+
+.app-account__email {
+  max-width: 220px;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-account__sign-in,
+.app-account__sign-out {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0 12px;
+}
+
+.app-account__sign-out {
+  cursor: pointer;
+}
+
+.app-account__loading {
+  color: #6b7280;
+  font-weight: 700;
 }
 
 .app-hero,
@@ -141,6 +264,23 @@ textarea {
   .app-shell {
     gap: 20px;
     padding: 20px;
+  }
+
+  .app-topbar {
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    min-height: 72px;
+    padding: 12px 20px;
+  }
+
+  .app-topbar__nav {
+    grid-column: 1 / -1;
+    order: 3;
+    overflow-x: auto;
+  }
+
+  .app-account__body {
+    display: none;
   }
 
   .app-hero h1,

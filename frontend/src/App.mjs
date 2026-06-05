@@ -6,6 +6,7 @@ import { createAuthCallbackPage, parseAuthCallbackUrl } from "./auth/sign-in-flo
 import { createProfilePage } from "./auth/profile-page.mjs";
 import { APP_ROUTES } from "./app-routes.mjs";
 import { createFeedPage } from "./feed/feed-page.mjs";
+import { AppLayout } from "./layout/app-layout.mjs";
 
 import "./auth/profile-page.css";
 import "./auth/sign-in-flow.css";
@@ -21,12 +22,16 @@ export function App() {
     React.createElement(
       Routes,
       null,
-      React.createElement(Route, { path: "/", element: React.createElement(HomeRoute) }),
-      React.createElement(Route, { path: "/feed", element: React.createElement(FeedRoute) }),
-      React.createElement(Route, { path: "/profile", element: React.createElement(ProfileRoute) }),
-      React.createElement(Route, { path: "/post/:id", element: React.createElement(PostDetailRoute) }),
-      React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
-      React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
+      React.createElement(
+        Route,
+        { element: React.createElement(AppLayout) },
+        React.createElement(Route, { path: "/", element: React.createElement(HomeRoute) }),
+        React.createElement(Route, { path: "/feed", element: React.createElement(FeedRoute) }),
+        React.createElement(Route, { path: "/profile", element: React.createElement(ProfileRoute) }),
+        React.createElement(Route, { path: "/post/:id", element: React.createElement(PostDetailRoute) }),
+        React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
+        React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
+      ),
     ),
   );
 }
