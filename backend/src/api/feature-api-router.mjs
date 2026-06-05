@@ -133,7 +133,7 @@ function createHandlerRegistry({ env, logger, db, jwtService, storage, fetchFn }
       if (matchUploadsRoute(method, path)) {
         uploadsHandlers ??= createUploadsHandlers({
           uploadsService: createUploadsService({
-            storage: storage ?? createS3ImageStorage({ env }),
+            storage: storage ?? createConfiguredImageStorage({ env }),
           }),
           logger,
         });
@@ -257,4 +257,26 @@ function toPgConnectionString(databaseUrl) {
   const parsed = new URL(databaseUrl);
   parsed.searchParams.delete("sslmode");
   return parsed.toString();
+}
+
+function createConfiguredImageStorage({ env }) {
+  if (!hasObjectStorageConfig(env)) {
+    return {
+      async putImage() {
+        throw new ApiError(503, "FEATURE_UNAVAILABLE", "Image uploads are not configured");
+      },
+    };
+  }
+  return createS3ImageStorage({ env });
+}
+
+function hasObjectStorageConfig(env) {
+  return [
+    "OBJECT_STORAGE_ENDPOINT",
+    "OBJECT_STORAGE_REGION",
+    "OBJECT_STORAGE_BUCKET",
+    "OBJECT_STORAGE_ACCESS_KEY_ID",
+    "OBJECT_STORAGE_SECRET_ACCESS_KEY",
+    "OBJECT_STORAGE_PREFIX",
+  ].every((name) => Boolean(env[name] && String(env[name]).trim()));
 }
