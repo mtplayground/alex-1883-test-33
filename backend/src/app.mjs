@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 
 import { ApiError, logUnhandledError, toErrorResponse } from "../../scripts/error-response.mjs";
+import { createFeatureApiRouter } from "./api/feature-api-router.mjs";
 
 /**
  * @param {{ logger?: Console }} options
@@ -21,6 +22,7 @@ export function createExpressApp({ logger = console } = {}) {
 
   app.get("/healthz", healthCheckHandler);
   app.get("/api/healthz", healthCheckHandler);
+  app.use("/api", createFeatureApiRouter({ logger }));
 
   if (existsSync(frontendIndexPath)) {
     app.use(express.static(frontendDistPath));
@@ -73,6 +75,7 @@ function notFoundHandler(request, _response, next) {
  */
 function errorHandler(logger) {
   return (error, _request, response, _next) => {
+    void _next;
     const requestId = response.locals.requestId;
 
     if (!(error instanceof ApiError)) {
