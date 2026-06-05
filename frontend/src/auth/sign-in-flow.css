@@ -1,0 +1,51 @@
+.topbar-auth {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.topbar-auth__link {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  font-weight: 600;
+  gap: 8px;
+  min-height: 36px;
+  text-decoration: none;
+}
+
+.topbar-auth__link[aria-disabled="true"] {
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.topbar-auth__avatar {
+  border-radius: 50%;
+  height: 28px;
+  object-fit: cover;
+  width: 28px;
+}
+
+.auth-callback {
+  max-width: 520px;
+  padding: 24px 0;
+}
+
+.auth-callback__message,
+.auth-callback__error {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.auth-callback__error {
+  color: #b91c1c;
+}
+
+.auth-callback__retry {
+  color: #111827;
+  display: inline-flex;
+  font-weight: 600;
+  margin-top: 12px;
+  text-decoration: none;
+}
