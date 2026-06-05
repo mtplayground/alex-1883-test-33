@@ -40,7 +40,7 @@ export function createPostgresLikesRepository(db) {
           inserted AS (
             INSERT INTO likes (post_id, user_id)
             SELECT id, $2 FROM target_post
-            ON CONFLICT (post_id, user_id) DO NOTHING
+            ON CONFLICT (user_id, post_id) DO NOTHING
             RETURNING post_id
           )
           SELECT
