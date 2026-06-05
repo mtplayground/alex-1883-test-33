@@ -8,11 +8,16 @@ import { getHomeRouteDecision, getProtectedRouteDecision } from "./auth/route-gu
 import { APP_ROUTES } from "./app-routes.mjs";
 import { createFeedPage } from "./feed/feed-page.mjs";
 import { AppLayout } from "./layout/app-layout.mjs";
+import { createPostDetailPage } from "./posts/post-detail-page.mjs";
 
 import "./auth/profile-page.css";
 import "./auth/sign-in-flow.css";
+import "./comments/comment-thread.css";
 import "./feed/feed-page.css";
+import "./follows/follow-toggle.css";
+import "./likes/like-toggle.css";
 import "./posts/post-card.css";
+import "./posts/post-detail-page.css";
 
 export { APP_ROUTES };
 
@@ -30,15 +35,18 @@ export function App() {
           Route,
           { element: React.createElement(AppLayout) },
           React.createElement(Route, { path: "/", element: React.createElement(HomeRoute) }),
-          React.createElement(Route, { path: "/feed", element: React.createElement(ProtectedRoute, null, React.createElement(FeedRoute)) }),
-          React.createElement(
-            Route,
-            { path: "/profile", element: React.createElement(ProtectedRoute, null, React.createElement(ProfileRoute)) },
-          ),
-          React.createElement(
-            Route,
-            { path: "/post/:id", element: React.createElement(ProtectedRoute, null, React.createElement(PostDetailRoute)) },
-          ),
+          React.createElement(Route, {
+            path: "/feed",
+            element: React.createElement(ProtectedRoute, null, React.createElement(FeedRoute)),
+          }),
+          React.createElement(Route, {
+            path: "/profile",
+            element: React.createElement(ProtectedRoute, null, React.createElement(ProfileRoute)),
+          }),
+          React.createElement(Route, {
+            path: "/post/:id",
+            element: React.createElement(ProtectedRoute, null, React.createElement(PostDetailRoute)),
+          }),
           React.createElement(Route, { path: "/auth/callback", element: React.createElement(AuthCallbackRoute) }),
           React.createElement(Route, { path: "*", element: React.createElement(NotFoundRoute) }),
         ),
@@ -178,20 +186,33 @@ function ProfileRoute() {
 function PostDetailRoute() {
   const params = useParams();
   const postId = params.id || "";
+  const apiClient = useAppApiClient();
+  const { authView } = useAuthSession();
+  const mountPostDetailPage = useMemo(
+    () => () =>
+      createPostDetailPage({
+        apiClient,
+        currentUser: authView.currentUser,
+        postId,
+      }),
+    [apiClient, authView.currentUser, postId],
+  );
 
   return React.createElement(
     RouteShell,
     {
       eyebrow: "Post detail",
       title: "Post detail",
-      description: "Route context is ready for the post interaction assembly.",
+      description: "Post card, author follow control, likes, and comments are assembled on this route.",
     },
-    React.createElement(
-      "section",
-      { className: "route-panel", "aria-label": "Selected post" },
-      React.createElement("h2", null, "Selected post"),
-      React.createElement("p", null, postId ? `Post id: ${postId}` : "No post id was provided."),
-    ),
+    postId
+      ? React.createElement(DomPageMount, { factory: mountPostDetailPage })
+      : React.createElement(
+          "section",
+          { className: "route-panel", "aria-label": "Selected post" },
+          React.createElement("h2", null, "Selected post"),
+          React.createElement("p", null, "No post id was provided."),
+        ),
   );
 }
 

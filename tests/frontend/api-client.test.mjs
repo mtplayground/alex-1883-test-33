@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  ApiClientError,
-  createApiClient,
-  createMemoryTokenStore,
-} from "../../frontend/src/auth/api-client.mjs";
+import { ApiClientError, createApiClient, createMemoryTokenStore } from "../../frontend/src/auth/api-client.mjs";
 
 test("api client attaches JWT authorization and parses JSON responses", async () => {
   const requests = [];
@@ -55,6 +51,7 @@ test("api client maps feed, follow, like, and comment endpoints", async () => {
   });
 
   await client.listFeed({ cursor: "abc", limit: 10 });
+  await client.getPost("post 1");
   await client.followUser("user 2");
   await client.unfollowUser("user 2");
   await client.likePost("post 1");
@@ -64,6 +61,7 @@ test("api client maps feed, follow, like, and comment endpoints", async () => {
 
   assert.deepEqual(paths, [
     ["http://local/feed?cursor=abc&limit=10", "GET"],
+    ["http://local/posts/post%201", "GET"],
     ["http://local/users/user%202/follow", "POST"],
     ["http://local/users/user%202/follow", "DELETE"],
     ["http://local/posts/post%201/like", "POST"],
